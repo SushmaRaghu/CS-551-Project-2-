@@ -57,18 +57,6 @@ int do_getepinfo_o(void);
 int do_svrctl(void);
 int do_getsetpriority(void);
 
-/*Project 2 system calls */
-
-int do_IGLookUp(void);
-int do_IGCreate(void);
-int do_IGDelete(void);
-int do_IGPublish(void);
-int do_IGRetreive(void);
-int do_IGPublisher(void);
-int do_IGSubscriber(void);
-int do_leaveGroupSubsrciber(void);
-int do_leaveGroupPublisher(void);
-
 /* schedule.c */
 void sched_init(void);
 int sched_start_user(endpoint_t ep, struct mproc *rmp);
@@ -115,3 +103,10 @@ struct mproc *find_proc(pid_t lpid);
 int nice_to_priority(int nice, unsigned *new_q);
 int pm_isokendpt(int ep, int *proc);
 void tell_vfs(struct mproc *rmp, message *m_ptr);
+
+
+/*Project 2 */
+
+int do_IG_Create();
+ 
+
