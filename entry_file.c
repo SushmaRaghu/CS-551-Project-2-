@@ -1,11 +1,15 @@
 #include<stdio.h>
 #include<string.h>
+#include "systemcalls.h"
+
+
+int create_a_group( );
+
 
 
 int main(){
 
-int option=0;
-int group_id;
+int option ;
 
 printf("Hi.. Welcome to the application\n");
 printf("Here is a list of things that can be done in the application: For any option, please enter the group_id\n");
@@ -21,97 +25,45 @@ printf("9. Delete a group \n");
 
 
 printf("Please enter your option\n");
-scanf("%d , %d", option,group_id);
+scanf("%d", &option);
 
 
 switch(option){
-case 1: look_up_for_a_group(group_id); break;
-case 2: create_a_group(group_id);break;
-case 3: subscribe(group_id);break;
-case 4: act_as_a_publisher(group_id);break;
-case 5: unsubscribe_from_a_group(group_id);break;
-case 6: send_a_message(group_id);break;
-case 7: receive_a_message(group_id);break;
-case 8: leave_a_group_as_publisher(group_id);break;
-case 9: delete_a_group(group_id);break;
-default: exit 0; break;
-
-}
-
-
-void look_up_for_a_group(int group_id){
-
-/* call IG_Lookup();
-if the group exists, return success
-else throw an error */
-
-}
-
-void create_a_group(int group_id){
-
-/* call IG_Create();
-create a group,if sucessful, return success
-else throw an error */
-
-}
-
-void subscribe(int group_id){
-
-/* call IG_Subscriber();
-if the group exists, add this as a client and return success
-else throw an error */
-
-
-}
-
-void act_as_a_publisher(int group_id){
-
-
-/* call IG_Publisher();
-if the group exists, make this proces as a publisher, notify all clients in that group(if possible) return success
-else throw an error */
-}
-
-void unsubcribe_from_a_group(int group_id){
-
-/* call leaveGroupSubsrciber();
-if the group exists, remove this process , notify all(if possible)return success
-else throw an error */
-
-}
-
-void send_a_message(int group_id){
-
-/* call IG_Publish();
-if the group exists, send  message , return success
-else throw an error */
-
-
-}
-
-void receive_a_message(int group_id){
-
-
-/* call IG_Retrieve();
-if the group exists, recevie the message ,  return success
-else throw an error */
-}
-
-
-void leave_group_as_publisher(int group_id){
-
-
-/* call leaveGroupPublisher();
-if the group exists, remove this process as a pubisher, notify all(if possible) : decision to be taken to have this process still in the group as a client or remove  return success
-else throw an error */
-}
-
-void delete_a_group(int group_id){
-
-
-/* call IG_Delete();
-if the group exists, remove all process ,  return success
-else throw an error */
+//case 1: look_up_for_a_group(group_id); break;
+case 2: create_a_group();break;
+//case 3: subscribe(group_id);break;
+//case 4: act_as_a_publisher(group_id);break;
+//case 5: unsubscribe_from_a_group(group_id);break;
+//case 6: send_a_message(group_id);break;
+//case 7: receive_a_message(group_id);break;
+//case 8: leave_a_group_as_publisher(group_id);break;
+//case 9: delete_a_group(group_id);break;
+default:  break;
 
 }
 }
+
+      
+
+int create_a_group(){
+int group_id;
+
+int newGroup;
+
+ 
+
+newGroup = IG_Create(&group_id);
+    if(newGroup == -1) {
+           printf("Creation of a new interest group failed\n");
+           return -1;
+        }else{
+           printf("Creation of a new interest group succeeded\n");
+		   return 1;
+        }
+
+    
+
+};
+
+    
+
