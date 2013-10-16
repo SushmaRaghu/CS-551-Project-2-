@@ -57,6 +57,12 @@ int do_getepinfo_o(void);
 int do_svrctl(void);
 int do_getsetpriority(void);
 
+
+/*Project 2 */
+
+int do_igcreate(void);
+ 
+
 /* schedule.c */
 void sched_init(void);
 int sched_start_user(endpoint_t ep, struct mproc *rmp);
@@ -105,8 +111,4 @@ int pm_isokendpt(int ep, int *proc);
 void tell_vfs(struct mproc *rmp, message *m_ptr);
 
 
-/*Project 2 */
-
-int do_IG_Create();
- 
 
