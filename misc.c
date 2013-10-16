@@ -529,8 +529,8 @@ struct processes_group
     int no_of_subscribers;
     int no_of_publishers;
     int no_of_messages;
-    struct subscribers subs[5];
-    struct publishers pubs[2];
+    struct subscribers participants[5];
+    struct publishers leaders[2];
     MSG_BUF group_message; /* There can be only 5 in the list */ 
     struct processes_group *next;
 };
@@ -564,6 +564,64 @@ void resetParams()
 
 
 }
+
+/*=========================================================*
+ *				Printing      			     *
+ *=========================================================*/
+
+
+void printTheNewGroup()
+{
+
+	PROCESSES g, t;
+    MSG_BUF msg;
+    int i;
+    t = NULL;
+    
+    printf(" PRINT  GROUP\n");
+    
+
+	g = newgroups;
+    if (g == NULL)
+    {
+            printf("No group"); 
+    }
+    else
+    {
+        
+    	while(g!=NULL)
+        {
+            printf("grpid = %d \n",g->grpid);
+            printf("no_of_subscribers = %d \n",g->no_of_subscribers);
+            printf("no_of_publishers = %d \n",g->no_of_publishers);
+            printf("no_of_messages = %d \n",g->no_of_messages);
+            for (i =0 ;i < g->no_of_subscribers ; i++)
+            {
+                printf("subcriber[%d] spid = %d \n",i,g->participants[i].subsrciber_pid);
+                message  = g->participants[i].head_of_list;
+                printf("subcriber[%d] message head message = %s\n",i,message);
+            }
+            for (i =0 ;i < g->no_of_publishers ; i++)
+            {
+                printf("publishers[%d] spid = %d \n",i,g->leaders[i]);
+            }            
+            printf("grpid = %d \n",g->grpid);
+            printf("no_of_messages = %d \n",g->no_of_messages);          
+            message = g->group_message;
+            printf(" Message Que \n");
+            while(message!=NULL)
+            {
+                printf("Message : %s  Read Count : %d",message->message,message->readcount);
+                message =message->next;
+            }
+            
+            g = g->next;
+    	}
+    }
+
+       
+}
+
 
 
 /*=========================================================*
@@ -631,6 +689,8 @@ void resetParams()
     
     
     sys_datacopy(PM_PROC_NR,&grpId,m_in.m_source ,m_in.m7_p1,sizeof(int));
+	
+	printTheNewGroup();
    
     return 1;
 
