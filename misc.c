@@ -525,7 +525,7 @@ struct publishers
 
 struct processes_group
 {
-    int grpid;
+    int group_id;
     int no_of_subscribers;
     int no_of_publishers;
     int no_of_messages;
@@ -574,7 +574,7 @@ void printTheNewGroup()
 {
 
 	PROCESSES g, t;
-    MSG_BUF msg;
+    MSG_BUF message;
     int i;
     t = NULL;
     
@@ -591,21 +591,24 @@ void printTheNewGroup()
         
     	while(g!=NULL)
         {
-            printf("grpid = %d \n",g->grpid);
+            printf("grpid = %d \n",g->group_id);
             printf("no_of_subscribers = %d \n",g->no_of_subscribers);
             printf("no_of_publishers = %d \n",g->no_of_publishers);
             printf("no_of_messages = %d \n",g->no_of_messages);
             for (i =0 ;i < g->no_of_subscribers ; i++)
             {
-                printf("subcriber[%d] spid = %d \n",i,g->participants[i].subsrciber_pid);
+                printf("subcriber[%d] spid = %d \n",i,g->participants[i].subscriber_pid);
                 message  = g->participants[i].head_of_list;
                 printf("subcriber[%d] message head message = %s\n",i,message);
             }
+			
+			
+			
             for (i =0 ;i < g->no_of_publishers ; i++)
             {
                 printf("publishers[%d] spid = %d \n",i,g->leaders[i]);
             }            
-            printf("grpid = %d \n",g->grpid);
+            printf("grpid = %d \n",g->group_id);
             printf("no_of_messages = %d \n",g->no_of_messages);          
             message = g->group_message;
             printf(" Message Que \n");
@@ -631,7 +634,7 @@ void printTheNewGroup()
  int do_IG_Create()
 {
     PROCESSES entry = NULL;
-   	int grpId;
+   	int group_Id;
 
     printf("\n--------------------------------------------------------------------------\n");
     printf("\n SYSTEM CALL INVOKED:: IG_Create \n\n");
@@ -649,7 +652,7 @@ void printTheNewGroup()
     	
     	newgroups=(PROCESSES)malloc(sizeof(struct processes_group));
             id_generator++;
-    	newgroups->grpid=id_generator;
+    	newgroups->group_id=id_generator;
     	newgroups->next=NULL;
     	newgroups->no_of_messages=0;
     	newgroups->no_of_publishers=0;
@@ -670,7 +673,7 @@ void printTheNewGroup()
     		entry->next=(PROCESSES)malloc(sizeof(struct processes_group));
     		entry=entry->next;
                 id_generator++;
-    		entry->grpid=id_generator;
+    		entry->group_id=id_generator;
     		entry->next=NULL;
     		entry->no_of_messages=0;
         	entry->no_of_publishers=0;
@@ -685,10 +688,10 @@ void printTheNewGroup()
     	}
     }
      
-    grpId = entry->grpid;  
+    group_Id = entry->group_id;  
     
     
-    sys_datacopy(PM_PROC_NR,&grpId,m_in.m_source ,m_in.m7_p1,sizeof(int));
+    sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
 	
 	printTheNewGroup();
    
