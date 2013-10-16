@@ -631,71 +631,75 @@ void printTheNewGroup()
  *				do_IG_Create      			     *
  *=========================================================*/
 
- int do_IG_Create()
+ int do_igcreate()
 {
-    PROCESSES entry = NULL;
-   	int group_Id;
+    // PROCESSES entry = NULL;
+   	// int group_Id;
 
-    printf("\n--------------------------------------------------------------------------\n");
-    printf("\n SYSTEM CALL INVOKED:: IG_Create \n\n");
+    // printf("\n--------------------------------------------------------------------------\n");
+    // printf("\n SYSTEM CALL INVOKED:: IG_Create \n\n");
     
    
-    if(!areAllParamsSet)
-    {
-         resetParams();
-    }
+    // if(!areAllParamsSet)
+    // {
+         // resetParams();
+    // }
 	
 
-    /* Adding the interest group */
-    if(newgroups==NULL)
-    {
+    // /* Adding the interest group */
+    // if(newgroups==NULL)
+    // {
     	
-    	newgroups=(PROCESSES)malloc(sizeof(struct processes_group));
-            id_generator++;
-    	newgroups->group_id=id_generator;
-    	newgroups->next=NULL;
-    	newgroups->no_of_messages=0;
-    	newgroups->no_of_publishers=0;
-    	newgroups->no_of_subscribers=0;
-    	entry=newgroups;
-    }
-    else
-    {
-    	if(no_of_groups<5)
-    	{
+    	// newgroups=(PROCESSES)malloc(sizeof(struct processes_group));
+            // id_generator++;
+    	// newgroups->group_id=id_generator;
+    	// newgroups->next=NULL;
+    	// newgroups->no_of_messages=0;
+    	// newgroups->no_of_publishers=0;
+    	// newgroups->no_of_subscribers=0;
+    	// entry=newgroups;
+    // }
+    // else
+    // {
+    	// if(no_of_groups<5)
+    	// {
            
-    		no_of_groups++;
-    		entry=newgroups;
-    		while(entry->next!=NULL)
-    		{
-    			entry=entry->next;
-    		}
-    		entry->next=(PROCESSES)malloc(sizeof(struct processes_group));
-    		entry=entry->next;
-                id_generator++;
-    		entry->group_id=id_generator;
-    		entry->next=NULL;
-    		entry->no_of_messages=0;
-        	entry->no_of_publishers=0;
-        	entry->no_of_subscribers=0;
-    	}
-    	else
-    	{
-            printf("\n\t IG_Create FAILED : Maximum number of groups exceeded \n");
+    		// no_of_groups++;
+    		// entry=newgroups;
+    		// while(entry->next!=NULL)
+    		// {
+    			// entry=entry->next;
+    		// }
+    		// entry->next=(PROCESSES)malloc(sizeof(struct processes_group));
+    		// entry=entry->next;
+                // id_generator++;
+    		// entry->group_id=id_generator;
+    		// entry->next=NULL;
+    		// entry->no_of_messages=0;
+        	// entry->no_of_publishers=0;
+        	// entry->no_of_subscribers=0;
+    	// }
+    	// else
+    	// {
+            // printf("\n\t IG_Create FAILED : Maximum number of groups exceeded \n");
 
              
-    		return 0;
-    	}
-    }
+    		// return 0;
+    	// }
+    // }
      
-    group_Id = entry->group_id;  
+    // group_Id = entry->group_id;  
     
     
-    sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
+    // sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
 	
-	printTheNewGroup();
+	// printTheNewGroup();
    
-    return 1;
+    // return 1;
+	
+	printf("IM CALLED");
+	return 1 ;
+	
 
 }
 
