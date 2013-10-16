@@ -7,23 +7,24 @@
 #include <string.h>
 
 
- int IGLookup(int groups[]){
- message m;  
-    m.m7_p1 = groups;
+ int IG_Lookup(int groups[]){
+    message m;  
+   //m.m7_p1 = groups;
 
     return(_syscall( PM_PROC_NR, 45, &m ));
 
 }
 
- int IGCreate(int * groupNo){
-message m;
+  int IG_Create(int * groupId){
+ 
+  message m;
 
-	m.m7_p1 = groupNo;
+	//m.m7_p1 = groupId;
     
-	return (_syscall( PM_PROC_NR, 69, &m ));
+	return (_syscall( PM_PROC_NR, 114, &m ));
 }
 
- int IGDelete(int groupNo){
+ int IG_Delete(int groupNo){
 message m;
 
 	m.m7_i1 = (int)groupNo;
@@ -32,7 +33,7 @@ message m;
 
 }
 
- int IGPublisher(int groupNo){
+ int IG_Publisher(int groupNo){
 message m;
    m.m7_i1=(int)groupNo;
    m.m7_i2 = (pid_t)getpid();
@@ -40,14 +41,14 @@ message m;
 
 }
 
- int IGSubscriber(int groupNo){
+ int IG_Subscriber(int groupNo){
  message m;
    m.m7_i1=groupNo;
    m.m7_i2 = (pid_t)getpid();
    return( _syscall( PM_PROC_NR, 84, &m ) );
 }
 
- int IGPublish(int groupNo, char *msg){
+ int IG_Publish(int groupNo, char *msg){
 message m;
    char *p=msg;
    m.m7_i1 = groupNo;
@@ -57,7 +58,7 @@ message m;
 
 }
 
- int IGRetreive(int groupNo, char *msg){
+ int IG_Retreive(int groupNo, char *msg){
  message m;	
    m.m7_i1 = groupNo;
    m.m7_p1 = msg;
@@ -66,14 +67,14 @@ message m;
 
 }
 
- int leaveGroupSubsrciber(int groupNo){
+ int leave_Group_Subsrciber(int groupNo){
 message m;
 	m.m7_i1 = groupNo;
 	m.m7_i2 = getpid();
 	return (_syscall( PM_PROC_NR, 106, &m ));
 }
 
- int leaveGroupPublisher(int groupNo){
+ int leave_Group_Publisher(int groupNo){
 message m;
 	m.m7_i1 = groupNo;
 	m.m7_i2 = getpid();
