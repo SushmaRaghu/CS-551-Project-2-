@@ -125,7 +125,13 @@ int (*call_vec[])(void) = {
 	do_srv_kill,	/* 111 = srv_kill */
  	no_sys, 	/* 112 = gcov_flush */
 	do_get,		/* 113 = getsid	*/
-	do_igcreate,	/* 114 = getsid	*/
+	do_igcreate,	/* 114 = create	*/
+	do_iglookup,    /*115 =lookup*/
+	do_igpublisher,    /*116 =publisher*/
+	do_igsubscriber,    /*117 =subscriber*/
+	do_igpublish,      /*118 = publish*/
+	do_igretrieve,    /*119=subscribe*/
+	do_igdelete       /*IGDELETE*/
 	 
 };
 /* This should not fail with "array size is negative": */
