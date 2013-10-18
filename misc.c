@@ -29,7 +29,8 @@
 #include "mproc.h"
 #include "param.h"
 #include "kernel/proc.h"
-
+#include <stdlib.h>
+ 
 struct utsname uts_val = {
   "Minix",		/* system name */
   "noname",		/* node/network name */
@@ -500,11 +501,22 @@ char *brk_addr;
  *				Project 2 				             *
  *===========================================================================*/
 
+ 
+ #define MAX_GROUPS 5
+ #define LENGTH 100
+ #define MAX_PUBLISHERS 3 
+ #define MAX_SUBSCRIBERS 5
+ #define QUEUE_FULL 5
+ #define FALSE 0
+ #define TRUE 1 
+ 
+  
+ 
 struct messages_queue 
 {
 
  char message[100]; 
-    int readcount;
+    int count;
     struct messages_queue * next;
 
 };
@@ -513,14 +525,14 @@ typedef struct messages_queue * MSG_BUF;
 
 struct subscribers
 {
-    int subscriber_pid; /* PID of the subscriber process */
-    MSG_BUF head_of_list; /*How many messages should the subscriber read */
+    int subscriber_pid;  
+    MSG_BUF sub_read_messages;  
 };
 
 
 struct publishers
 {
-    int publisher_pid; /* PID of the publishers process */
+    int publisher_pid;  
 };
 
 struct processes_group
@@ -530,8 +542,8 @@ struct processes_group
     int no_of_publishers;
     int no_of_messages;
     struct subscribers participants[5];
-    struct publishers leaders[2];
-    MSG_BUF group_message; /* There can be only 5 in the list */ 
+    struct publishers leaders[MAX_PUBLISHERS];
+    MSG_BUF group_message;  
     struct processes_group *next;
 };
 
@@ -540,40 +552,236 @@ typedef struct processes_group* PROCESSES;
 static PROCESSES newgroups=NULL;
 
 static int no_of_groups;
-static int id_generator;
+static int group_id_allocate;
 static int areAllParamsSet = FALSE;
 
-#define ERROR_CODE 0
-
-
-/*=========================================================*
- *				resetParams      			     *
- *=========================================================*/
-
-void resetParams()
+ int checkIfPublisherIsUnblocked()
 {
+   
+	BLOCKED_PROCESSES member, temp;
+    temp = NULL;
+
+	member = blockedProcesses;
+
+	while(member!=NULL)
+    {
+		if(member->unblocked == TRUE)
+		{
+            return TRUE;
+		}
+        member = member->next;
+	} 
+    return FALSE;    
+}
 
  
-
-    no_of_groups =0;
-    id_generator =0;
-
+void resetParams()
+{
+	no_of_groups =0;
+    group_id_allocate =0;
+	blockedProcesses = NULL ;
     areAllParamsSet = TRUE;
     newgroups = NULL;
  
-
-
 }
 
-/*=========================================================*
- *				Printing      			     *
- *=========================================================*/
+void printProcessesInBlockedState()
+{
+
+	BLOCKED_PROCESSES member, temp;
+    temp = NULL;
+    printf(" PRINT BLOCK LIST\n");    
+    
+
+	member = blockedProcesses;
+    if (member == NULL)
+            printf("No one is blcked\n"); 
+    else
+    {
+        
+    	while(member!=NULL)
+        {
+            printf("publisher pid = %d \n",member->publisher_pid);
+            printf("group  id = %d \n",member->group_id);
+            printf("publisher = %d \n",member->publisher);
+            printf("message = %d \n",member->store);
+            printf("unblocked status = %d \n",member->unblocked);            
+            printf("message = %s \n",member->msg);
+            member = member->next;
+    	}
+    }
+  
+        
+} 
+ 
+
+void unblockPublisherFromBlockList(int publisher_grpid)
+{
+
+	BLOCKED_PROCESSES member, temp;
+    member = temp = NULL;
+
+    
+
+	member = blockedProcesses;
+	while(member!=NULL)
+    {
+		if(member->group_id == publisher_grpid)
+		{
+            
+            member->unblocked = TRUE;
+		}
+        member = member->next;
+	}
+     
+    printProcessesInBlockedState();        
+}
 
 
+
+
+int isCallBlocked(int publisher)
+{
+
+    BLOCKED_PROCESSES bl_list = blockedProcesses;
+    
+    while(bl_list != NULL)
+    {
+      if( bl_list->publisher== publisher)
+      {
+         
+        return 1;
+      }
+     bl_list=bl_list->next;
+    }
+      
+    return 0;
+    
+}
+void saveCurrentStatus(message store, int publisher,char *msg)
+{
+    BLOCKED_PROCESSES member = NULL;   
+
+   
+    
+    if(blockedProcesses== NULL)
+    {
+
+    	blockedProcesses = (BLOCKED_PROCESSES)malloc(sizeof(struct blockedPublisher));
+        blockedProcesses->publisher_pid = store.m7_i2;
+        blockedProcesses->group_id = store.m7_i1;
+        blockedProcesses->publisher = publisher;
+    	blockedProcesses->unblocked = FALSE;
+        strcpy(blockedProcesses->msg,msg);
+        
+    
+        memcpy(&blockedProcesses->store,&store,sizeof(message));
+
+        
+    	blockedProcesses->next=NULL;        
+    }
+    else
+    {
+        member = blockedProcesses;
+        while(member->next!=NULL)
+        {
+            member=member->next;
+        }
+        member->next = (BLOCKED_PROCESSES)malloc(sizeof(struct blockedPublisher));
+        member=member->next; /* point to next node */
+        member->publisher_pid = store.m7_i2;
+        member->group_id = store.m7_i1;
+        member->publisher = publisher;        
+        member->unblocked = FALSE;
+        strcpy(member->msg,msg);        
+        memcpy(&member->store,&store,sizeof(message));
+        member->next=NULL; 
+     }
+    printProcessesInBlockedState();
+        
+}
+
+int getOldStatus(message* store, int publisher,char * msg)
+{
+
+    BLOCKED_PROCESSES bl_list = blockedProcesses;
+
+        
+    while(bl_list != NULL)
+    {
+
+      if( bl_list->publisher == publisher)
+      {
+          memcpy(store,&bl_list->store,sizeof(message));
+          strcpy(msg,bl_list->msg);            
+          return 1;
+      }
+     bl_list=bl_list->next;
+    }
+
+    
+    return 0;
+     
+}
+
+int removePublisherFromBlockList(int publisher)
+{
+
+	BLOCKED_PROCESSES bl_list, temp;
+    bl_list = temp = NULL;
+
+     
+    if(blockedProcesses == NULL)
+    {
+        printf("Group does not exist.");        
+        return 0;
+    }
+    
+	if(blockedProcesses->publisher == publisher)
+	{
+        temp = blockedProcesses;
+		blockedProcesses = blockedProcesses->next;
+		free(temp);
+	}
+	else
+	{
+         
+		bl_list = blockedProcesses;
+		while(bl_list->next!=NULL)
+        {
+            
+			if(bl_list->next->publisher == publisher)
+			{
+               temp = bl_list->next;
+				break;
+			}
+			bl_list=bl_list->next;
+		}
+      
+		if(temp!=NULL)
+		{
+             
+			bl_list->next = temp->next;
+			free(temp);
+		}
+		else
+		{
+           printf("\n Group does not exist.");
+			return 0;
+		}
+	}
+   printProcessesInBlockedState();
+
+    return 1;
+}
+
+
+ 
+ 
 void printTheNewGroup()
 {
 
-	PROCESSES g, t;
+	PROCESSES member, t;
     MSG_BUF message;
     int i;
     t = NULL;
@@ -581,44 +789,44 @@ void printTheNewGroup()
     printf(" PRINT  GROUP\n");
     
 
-	g = newgroups;
-    if (g == NULL)
+	member = newgroups;
+    if (member == NULL)
     {
             printf("No group"); 
     }
     else
     {
         
-    	while(g!=NULL)
+    	while(member!=NULL)
         {
-            printf("grpid = %d \n",g->group_id);
-            printf("no_of_subscribers = %d \n",g->no_of_subscribers);
-            printf("no_of_publishers = %d \n",g->no_of_publishers);
-            printf("no_of_messages = %d \n",g->no_of_messages);
-            for (i =0 ;i < g->no_of_subscribers ; i++)
+            printf("grpid = %d \n",member->group_id);
+            printf("no_of_subscribers = %d \n",member->no_of_subscribers);
+            printf("no_of_publishers = %d \n",member->no_of_publishers);
+            printf("no_of_messages = %d \n",member->no_of_messages);
+            for (i =0 ;i < member->no_of_subscribers ; i++)
             {
-                printf("subcriber[%d] spid = %d \n",i,g->participants[i].subscriber_pid);
-                message  = g->participants[i].head_of_list;
+                printf("subcriber[%d] spid = %d \n",i,member->participants[i].subscriber_pid);
+                message  = member->participants[i].sub_read_messages;
                 printf("subcriber[%d] message head message = %s\n",i,message);
             }
 			
 			
 			
-            for (i =0 ;i < g->no_of_publishers ; i++)
+            for (i =0 ;i < member->no_of_publishers ; i++)
             {
-                printf("publishers[%d] spid = %d \n",i,g->leaders[i]);
+                printf("publishers[%d] spid = %d \n",i,member->leaders[i]);
             }            
-            printf("grpid = %d \n",g->group_id);
-            printf("no_of_messages = %d \n",g->no_of_messages);          
-            message = g->group_message;
+            printf("grpid = %d \n",member->group_id);
+            printf("no_of_messages = %d \n",member->no_of_messages);          
+            message = member->group_message;
             printf(" Message Que \n");
             while(message!=NULL)
             {
-                printf("Message : %s  Read Count : %d",message->message,message->readcount);
+                printf("Message : %s  Read Count : %d",message->message,message->count);
                 message =message->next;
             }
             
-            g = g->next;
+            member = member->next;
     	}
     }
 
@@ -626,80 +834,483 @@ void printTheNewGroup()
 }
 
 
-
-/*=========================================================*
- *				do_IG_Create      			     *
- *=========================================================*/
+ 
 
  int do_igcreate()
 {
-    // PROCESSES entry = NULL;
-   	// int group_Id;
+    PROCESSES entry = NULL;
+   	int group_Id;
 
-    // printf("\n--------------------------------------------------------------------------\n");
-    // printf("\n SYSTEM CALL INVOKED:: IG_Create \n\n");
+    printf("\n--------------------------------------------------------------------------\n");
+    printf("\n SYSTEM CALL INVOKED:: IG_Create \n\n");
     
    
-    // if(!areAllParamsSet)
-    // {
-         // resetParams();
-    // }
+    if(!areAllParamsSet)
+    {
+         resetParams();
+    }
 	
 
-    // /* Adding the interest group */
-    // if(newgroups==NULL)
-    // {
+    /* Adding the interest group */
+    if(newgroups==NULL)
+    {
     	
-    	// newgroups=(PROCESSES)malloc(sizeof(struct processes_group));
-            // id_generator++;
-    	// newgroups->group_id=id_generator;
-    	// newgroups->next=NULL;
-    	// newgroups->no_of_messages=0;
-    	// newgroups->no_of_publishers=0;
-    	// newgroups->no_of_subscribers=0;
-    	// entry=newgroups;
-    // }
-    // else
-    // {
-    	// if(no_of_groups<5)
-    	// {
+    	newgroups=(PROCESSES)malloc(sizeof(struct processes_group));
+            group_id_allocate++;
+    	newgroups->group_id=group_id_allocate;
+    	newgroups->next=NULL;
+    	newgroups->no_of_messages=0;
+    	newgroups->no_of_publishers=0;
+    	newgroups->no_of_subscribers=0;
+    	entry=newgroups;
+    }
+    else
+    {
+    	if(no_of_groups<MAX_GROUPS)
+    	{
            
-    		// no_of_groups++;
-    		// entry=newgroups;
-    		// while(entry->next!=NULL)
-    		// {
-    			// entry=entry->next;
-    		// }
-    		// entry->next=(PROCESSES)malloc(sizeof(struct processes_group));
-    		// entry=entry->next;
-                // id_generator++;
-    		// entry->group_id=id_generator;
-    		// entry->next=NULL;
-    		// entry->no_of_messages=0;
-        	// entry->no_of_publishers=0;
-        	// entry->no_of_subscribers=0;
-    	// }
-    	// else
-    	// {
-            // printf("\n\t IG_Create FAILED : Maximum number of groups exceeded \n");
+    		no_of_groups++;
+    		entry=newgroups;
+    		while(entry->next!=NULL)
+    		{
+    			entry=entry->next;
+    		}
+    		entry->next=(PROCESSES)malloc(sizeof(struct processes_group));
+    		entry=entry->next;
+                group_id_allocate++;
+    		entry->group_id=group_id_allocate;
+    		entry->next=NULL;
+    		entry->no_of_messages=0;
+        	entry->no_of_publishers=0;
+        	entry->no_of_subscribers=0;
+    	}
+    	else
+    	{
+            printf("\n\t IG_Create FAILED : Maximum number of groups exceeded \n");
 
              
-    		// return 0;
-    	// }
-    // }
+    		return 0;
+    	}
+    }
      
-    // group_Id = entry->group_id;  
+    group_Id = entry->group_id;  
     
     
-    // sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
+    //sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
 	
-	// printTheNewGroup();
+	printTheNewGroup();
    
-    // return 1;
-	
-	printf("IM CALLED");
-	return 1 ;
+    return 1;
+	 
 	
 
 }
 
+int do_iglookup()
+{
+	char p[LENGTH]={0};
+	char str[10];
+	PROCESSES member =newgroups;
+	int i=0;
+    int grpIds[MAX_GROUPS+1];	 
+
+     printf("\n SYSTEM CALL INVOKED:: IG LookUp \n\n");
+
+    
+	if(p==NULL){
+	 
+		 printf("\n Error: Input Array does not exist.");
+        return 0;
+	}
+	while(member!=NULL)
+	{
+        grpIds[i++] =  member->group_id;
+        member = member->next;
+	}
+    
+   // sys_datacopy(PM_PROC_NR,grpIds,m_in.m_source ,m_in.m7_p1,sizeof(grpIds)); 
+     printf("\n--------------------------------------------------------------------------\n");    
+    return 1;
+}
+ 
+  int do_igpublisher()
+{
+	int grpid=m_in.m7_i1;
+	int prid=m_in.m7_i2;
+
+	PROCESSES member =newgroups;
+
+    
+	
+    printf("\n SYSTEM CALL INVOKED:: register as Publisher \n\n");
+
+   
+	while(member!=NULL)
+	{
+
+		if(member->group_id==grpid)
+		{
+			 
+			break;
+		}
+		member=member->next;
+	}
+	if(member!=NULL)
+	{
+		if(member->no_of_publishers<MAX_PUBLISHERS)
+		{
+			member->leaders[member->no_of_publishers++].publisher_pid=prid;
+		}
+		else
+		{
+            printf("\n Maximum no: of publishers reached.");
+			return 0;
+		}
+	}
+	else
+	{
+		 
+         printf("\n Group %d could not be found.", grpid);
+		return 0;
+	}
+
+    
+    return 1;
+}
+
+  int do_igsubscriber()
+{
+	int grpid=m_in.m7_i1;
+	int prid=(int)m_in.m7_i2;
+	PROCESSES member =newgroups;
+
+    
+    printf("\n SYSTEM CALL INVOKED:: register as Subscriber \n\n");
+
+   
+	while(member!=NULL)
+	{
+		if(member->group_id==grpid)
+		{
+			break;
+		}
+		member=member->next;
+	}
+	if(member!=NULL)
+	{
+		if(member->no_of_subscribers<MAX_SUBSCRIBERS)
+		{
+			member->participants[member->no_of_subscribers].subscriber_pid=prid;
+			member->participants[member->no_of_subscribers].sub_read_messages=member->group_message;
+			member->no_of_subscribers++;
+		}
+		else
+		{
+            printf("\n Maximum no: of subscribers reached.");
+			return 0;
+		}
+	}
+	else
+	{
+         
+        printf("\n Group could not be found.");
+		return 0;
+	}
+    
+    return 1;
+}
+
+
+  int do_igpublish()
+{
+	int grpid;
+	int prid;
+	PROCESSES member =newgroups;
+	int i, found;
+    char message[LENGTH] = {0};
+    int val;
+    MSG_BUF messgae_buffer =NULL;
+    register struct mproc *rmp;    
+
+
+     printf("\n SYSTEM CALL INVOKED:: publish \n\n");
+
+    rmp = &mproc[who_p];
+
+    
+    if (!isCallBlocked(who_p))
+    {
+          
+    	 //sys_datacopy(m_in.m_source,m_in.m7_p1, PM_PROC_NR,message,LENGTH);
+		if(message==NULL)
+		{
+            
+			return 0;
+		}
+    }
+    else
+    {
+        
+        val = getOldStatus(&m_in,who_p,message);   
+        if (val < 0)
+        {
+             printf ("error \n");
+            return 0;
+        }                
+        
+        val = removePublisherFromBlockList(who_p);   
+        if (val < 0)
+        {
+            printf (" error \n");
+            return 0;
+        }
+    }
+    
+    
+    grpid=m_in.m7_i1;
+    prid=(int)m_in.m7_i2;
+     
+	while(member!=NULL)
+	{
+		if(member->group_id==grpid)
+		{
+			break;
+		}
+		member=member->next;
+	}
+	if(member!=NULL)
+	{
+		/* Check if pid is already registered as a publisher. */
+		found=0;
+		for (i = 0; i < member->no_of_publishers; i++)
+		{
+			if (member->leaders[i].publisher_pid == prid)
+			{
+				found = 1;
+				break;
+			}
+		}
+		if (found == 0)
+		{
+             printf("\n Error: Not a valid Publisher.");
+			return 0;
+		}
+		
+
+	 
+		if (member->no_of_messages == 0 || member->group_message == NULL)
+		{
+			member->group_message = (MSG_BUF) malloc(sizeof(struct messages_queue));
+			 
+			strcpy(member->group_message->message, message);
+			 
+			member->group_message->count = 0;
+			member->group_message->next = NULL;
+			member->no_of_messages++;
+
+			 
+			for (i = 0; i < member->no_of_subscribers; i++) 
+			{
+				member->participants[i].sub_read_messages = member->group_message;
+			}
+		} 
+		
+        else if (member->no_of_messages < QUEUE_FULL)
+        {
+               
+			messgae_buffer = member->group_message;
+			while (messgae_buffer->next != NULL) 
+			{
+				messgae_buffer = messgae_buffer->next;
+			}
+			messgae_buffer->next = (MSG_BUF) malloc(sizeof(struct messages_queue));
+			messgae_buffer = messgae_buffer->next;
+			
+			strcpy(messgae_buffer->message, message);
+			 printf("\n Message   : %s", messgae_buffer->message);
+			messgae_buffer->count = 0;
+       messgae_buffer->next = NULL;
+            
+			member->no_of_messages++;
+
+            
+		} 
+		
+        else if (member->no_of_messages >= QUEUE_FULL)
+		{
+			printf("Queue already has 5 messages \n");
+            
+#if 0
+            return 0;
+#endif
+
+            saveCurrentStatus(m_in,who_p,message);
+             
+
+            rmp->mp_flags |= SIGSUSPENDED;  
+            
+               
+            return 0;
+            
+		}
+	}
+	else
+	{
+		 printf("\n group could not be found.");
+		return 0;
+	}
+    
+   printTheNewGroup();
+    return 1;
+}
+
+ int do_igretrieve()
+{
+
+	int grpid=m_in.m7_i1;
+	int prid=(int)m_in.m7_i2;
+    char message[LENGTH]={0};
+	MSG_BUF info=NULL;
+	PROCESSES member =newgroups;
+	int i, found;
+
+     printf("\n SYSTEM CALL INVOKED:: subscribe \n\n");
+
+
+    
+	while(member!=NULL)
+	{
+		if(member->group_id==grpid)
+		{
+			break;
+		}
+		member=member->next;
+	}
+
+	if(member!=NULL)
+	{
+
+		if(member->group_message==NULL)
+		{
+            
+			return 0;
+		}
+		 
+		found=0;
+		for (i = 0; i < member->no_of_subscribers; i++)
+		{
+			if (member->participants[i].subscriber_pid == prid)
+			{
+				found = 1;
+				break;
+			}
+		}
+		if (found == 0)
+		{
+            printf("\n Error ");
+			return 0;
+		
+		}
+		
+ 
+
+		strcpy(message, member->participants[i].sub_read_messages->message);
+		//sys_datacopy(PM_PROC_NR,message,m_in.m_source,m_in.m7_p1,LENGTH);
+		 
+		member->participants[i].sub_read_messages->count++;
+	 
+	 
+		if (member->participants[i].sub_read_messages->count >= member->no_of_subscribers)
+		{
+			info = member->participants[i].sub_read_messages;
+            unblockPublisherFromBlockList(member->group_id);
+            
+                        
+		}
+		
+		member->participants[i].sub_read_messages = member->participants[i].sub_read_messages->next;
+		if (message != NULL)
+		{
+			member->group_message=member->group_message->next;
+            member->no_of_messages--;
+			 
+			free(message);
+		}
+	}
+	else
+	{
+       printf("\n Group could not be found."); 
+		return 0;
+	}
+
+      
+    return 1;
+}
+
+
+int do_igdelete()
+{
+	PROCESSES member =NULL;
+    PROCESSES temp =NULL;
+	int grpid=m_in.m7_i1;
+	MSG_BUF info;
+
+
+   
+    if(newgroups == NULL)
+    {
+         printf("\n Group does not exist.");
+        return 0;
+    }
+
+
+	if(newgroups->group_id == grpid)
+	{
+         
+		temp=newgroups;
+		newgroups = newgroups->next;
+		while(member->group_message!=NULL)
+		{
+			info=member->group_message;
+			member->group_message=member->group_message->next;
+			free(info);
+		}
+		free(temp);
+	}
+	else
+	{
+         
+		member=newgroups;
+		while(member->next!=NULL){
+			if(member->next->group_id==grpid)
+			{
+				temp=member->next;
+				break;
+			}
+			member=member->next;
+		}
+		if(temp!=NULL)
+		{
+			member->next=temp->next;
+			 
+			while(member->group_message!=NULL)
+			{
+				info=member->group_message;
+				member->group_message=member->group_message->next;
+				free(info);
+			}
+			 
+			free(temp);
+		}
+		else
+		{
+            
+           printf("\n Group does not exist.");
+			return 0;
+		}
+	}
+
+    
+
+    return 1;
+}
