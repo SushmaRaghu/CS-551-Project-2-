@@ -130,7 +130,12 @@ int (*call_vec[])(void) = {
 	do_gcov_flush,	/* 112 = gcov_flush */
 	no_sys,		/* 113 = (getsid) */
 	no_sys,		/* 114 = IGCreate	*/
- 
+	no_sys,		/* 115= IGLookup	*/
+	no_sys,		/* 116= IGPublisher	*/
+	no_sys,      /*117 = IGSubscriber*/
+	no_sys,      /*118 = IGPUBLISH*/
+	no_sys,      /*119 = IGRETREIVE*/
+	no_sys		 /*120 = IGDELETE*/
 	 
 };
 /* This should not fail with "array size is negative": */
