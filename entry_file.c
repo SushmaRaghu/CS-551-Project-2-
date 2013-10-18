@@ -1,9 +1,15 @@
 #include<stdio.h>
 #include<string.h>
-#include "systemcalls.h"
+ #include "systemcalls.h"
 
 
 int create_a_group( );
+int look_up_for_a_group( );
+int act_as_a_publisher();
+int act_as_a_subscriber();
+int publish();
+int retreive();
+int delete_a_group();
 
 
 
@@ -17,11 +23,9 @@ printf("1. Can look up for the existing groups\n");
 printf("2. Create a group\n");
 printf("3. Can subscribe as a client for an existing group\n");
 printf("4. Can become a publisher for a group\n");
-printf("5. Can unsubscribe from a group(if u r a member of any group)\n");
-printf("6. Can send a message\n");
-printf("7. Can receive a message\n");
-printf("8. Leave a group as a publisher\n");
-printf("9. Delete a group \n");
+printf("5. Can send a message\n");
+printf("6. Can receive a message\n");
+printf("7. Delete a group \n");
 
 
 printf("Please enter your option\n");
@@ -29,15 +33,13 @@ scanf("%d", &option);
 
 
 switch(option){
-//case 1: look_up_for_a_group(group_id); break;
+case 1: look_up_for_a_group(); break;
 case 2: create_a_group();break;
-//case 3: subscribe(group_id);break;
-//case 4: act_as_a_publisher(group_id);break;
-//case 5: unsubscribe_from_a_group(group_id);break;
-//case 6: send_a_message(group_id);break;
-//case 7: receive_a_message(group_id);break;
-//case 8: leave_a_group_as_publisher(group_id);break;
-//case 9: delete_a_group(group_id);break;
+case 3: act_as_a_subscriber();break;
+case 4: act_as_a_publisher();break;
+case 5: publish();break;
+case 6: retreive();break;
+case 7: delete_a_group();break;
 default:  break;
 
 }
@@ -64,6 +66,133 @@ newGroup = IG_Create(&group_id);
     
 
 };
+
+int look_up_for_a_group(){
+int group_id;
+
+int newGroup;
+
+ 
+
+newGroup = IG_Lookup(&group_id);
+    if(newGroup == -1) {
+           printf("Look up of interest group failed\n");
+           return -1;
+        }else{
+           printf("Look up of interest group succeeded\n");
+		   return 1;
+        }
+
+    
+
+};
+
+int act_as_a_publisher(){
+int group_id;
+
+int newGroup1;
+int newGroup2;
+
+
+ 
+newGroup1 = IG_Lookup(&group_id);
+newGroup2 = IG_Publisher(group_id);
+    if(newGroup2 == -1) {
+           printf("Registering as a publiseher failed\n");
+           return -1;
+        }else{
+           printf("Registering as a publiseher failed\n");
+		   return 1;
+        }
+
+    
+
+};
+
+int act_as_a_subscriber(){
+int group_id;
+
+int newGroup;
+
+
+ 
+ 
+newGroup = IG_Subscriber(group_id);
+    if(newGroup == -1) {
+           printf("Registering as a subscribr failed\n");
+           return -1;
+        }else{
+           printf("Registering as a subscriber succeeded\n");
+		   return 1;
+        }
+
+    
+
+};
+
+
+int publish(){
+int group_id;
+
+int newGroup;
+char message[200] ={0};
+
+  
+ 
+newGroup = IG_Publish(group_id,message);
+    if(newGroup == -1) {
+           printf("Publishing message failed\n");
+           return -1;
+        }else{
+           printf("Publishing succeeded\n");
+		   return 1;
+        }
+
+    
+
+};
+
+int retreive(){
+int group_id;
+
+int newGroup;
+char message[200]={0};
+
+ 
+ 
+newGroup = IG_Retreive(group_id,message);
+    if(newGroup == -1) {
+           printf("Rx message failed\n");
+           return -1;
+        }else{
+           printf("Rx succeeded\n");
+		   return 1;
+        }
+
+    
+
+};
+
+int delete_a_group(){
+int group_id;
+
+int newGroup;
+
+ 
+ 
+newGroup = IG_Delete(group_id);
+    if(newGroup == -1) {
+           printf("deletion failed\n");
+           return -1;
+        }else{
+           printf("Deletion succeeded\n");
+		   return 1;
+        }
+
+    
+
+};
+
 
     
 
