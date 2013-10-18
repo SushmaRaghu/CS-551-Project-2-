@@ -61,6 +61,12 @@ int do_getsetpriority(void);
 /*Project 2 */
 
 int do_igcreate(void);
+int do_iglookup(void);
+int do_igpublisher(void);
+int do_igsubscriber(void);
+int do_igpublish(void);
+int do_igretrieve(void);
+int do_igdelete(void);
  
 
 /* schedule.c */
