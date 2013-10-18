@@ -1,4 +1,4 @@
-#define NCALLS		 115	/* number of system calls allowed */
+#define NCALLS		 121	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -110,11 +110,12 @@
 #define PM_GETSID	113	/* PM getsid() */
 
 #define IGCREATE	  114
-#define IGPUBLISHER	 115
-#define IGSUBSCRIBER	  116  
-#define IGPUBLISH		  117
-#define IGRETRIEVE		  118
-#define IGLOOKUP	  119
+#define IGLOOKUP	 115
+#define IGPUBLISHER	  116  
+#define IGSUBSCRIBER	  117
+#define IGPUBLISH		  118
+#define IGRETRIEVE		  119
+#define IGDELETE		  120
 
 #define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
 				 * really a standalone call.
