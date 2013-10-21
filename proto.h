@@ -67,6 +67,7 @@ int do_igsubscriber(void);
 int do_igpublish(void);
 int do_igretrieve(void);
 int do_igdelete(void);
+int do_iggetBackToOriginalMINIX(void);
  
 
 /* schedule.c */
