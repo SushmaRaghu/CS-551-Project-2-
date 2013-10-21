@@ -65,4 +65,9 @@ message m;
 
 }
 
+ int IG_getBackToOriginalMINIX(void)
+{
+	message m;
+   	return(_syscall( PM_PROC_NR, IGRESET, &m ));
+}
  
