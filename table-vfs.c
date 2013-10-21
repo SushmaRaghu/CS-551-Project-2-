@@ -135,7 +135,8 @@ int (*call_vec[])(void) = {
 	no_sys,      /*117 = IGSubscriber*/
 	no_sys,      /*118 = IGPUBLISH*/
 	no_sys,      /*119 = IGRETREIVE*/
-	no_sys		 /*120 = IGDELETE*/
+	no_sys,		 /*120 = IGDELETE*/
+	no_sys		/*121 = ORIGINAL*/
 	 
 };
 /* This should not fail with "array size is negative": */
