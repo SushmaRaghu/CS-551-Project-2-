@@ -1,4 +1,4 @@
-#define NCALLS		 121	/* number of system calls allowed */
+#define NCALLS		 122	/* number of system calls allowed */
 
 /* In case it isn't obvious enough: this list is sorted numerically. */
 #define EXIT		   1 
@@ -116,6 +116,7 @@
 #define IGPUBLISH		  118
 #define IGRETRIEVE		  119
 #define IGDELETE		  120
+#define IGRESET			  121
 
 #define TASK_REPLY	121	/* to VFS: reply code from drivers, not 
 				 * really a standalone call.
