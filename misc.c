@@ -510,6 +510,7 @@ char *brk_addr;
  #define FALSE 0
  #define TRUE 1 
  
+ 
   
  
 struct messages_queue 
@@ -554,6 +555,9 @@ static PROCESSES newgroups=NULL;
 static int no_of_groups;
 static int group_id_allocate;
 static int areAllParamsSet = FALSE;
+static int total_subscriber_count = 0;
+static int total_publisher_count = 0;
+
 
  int checkIfPublisherIsUnblocked()
 {
@@ -894,13 +898,10 @@ void printTheNewGroup()
     }
      
     group_Id = entry->group_id;  
-    
-    
-    //sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
-	
+    sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
 	printTheNewGroup();
    
-    return 1;
+    return group_Id;
 	 
 	
 
@@ -909,11 +910,10 @@ void printTheNewGroup()
 int do_iglookup()
 {
 	char p[LENGTH]={0};
-	char str[10];
-	PROCESSES member =newgroups;
+//	char str[10];
+	PROCESSES member=newgroups;
 	int i=0;
-    int grpIds[MAX_GROUPS+1];	 
-
+    int grpIds[MAX_GROUPS+1];
      printf("\n SYSTEM CALL INVOKED:: IG LookUp \n\n");
 
     
@@ -922,22 +922,32 @@ int do_iglookup()
 		 printf("\n Error: Input Array does not exist.");
         return 0;
 	}
+    if(member == NULL){
+        printf("\n No groups have been registered so far!");
+        return 0;
+    }
+    printf("\n The registered interest groups are as follows:");
 	while(member!=NULL)
-	{
+	{   
         grpIds[i++] =  member->group_id;
+        //Add a name for the group while registering and print it out here.
+        printf("\n Group :%d",member->group_id);
         member = member->next;
 	}
     
-   // sys_datacopy(PM_PROC_NR,grpIds,m_in.m_source ,m_in.m7_p1,sizeof(grpIds)); 
-     printf("\n--------------------------------------------------------------------------\n");    
-    return 1;
+//    sys_datacopy(PM_PROC_NR,grpIds,m_in.m_source ,m_in.m7_p1,sizeof(grpIds));
+     printf("\n--------------------------------------------------------------------------\n");
+    return 0;
 }
  
   int do_igpublisher()
 {
 	int grpid=m_in.m7_i1;
-	int prid=m_in.m7_i2;
-
+	int publisher_id=m_in.m7_i2;
+    if (publisher_id == 0) {
+        publisher_id =  ++total_publisher_count;
+         printf("Your publisher id is: %d",publisher_id);
+    }
 	PROCESSES member =newgroups;
 
     
@@ -957,9 +967,17 @@ int do_iglookup()
 	}
 	if(member!=NULL)
 	{
+        
+        for (int i = 0; i< member->no_of_publishers; i++) {
+            if (member->leaders[i].publisher_pid == publisher_id ) {
+                printf("\nYou are already registered in this group as a publisher");
+                return 0;
+            }
+        }
+        
 		if(member->no_of_publishers<MAX_PUBLISHERS)
 		{
-			member->leaders[member->no_of_publishers++].publisher_pid=prid;
+			member->leaders[member->no_of_publishers++].publisher_pid=publisher_id;
 		}
 		else
 		{
@@ -973,21 +991,23 @@ int do_iglookup()
          printf("\n Group %d could not be found.", grpid);
 		return 0;
 	}
-
-    
+    printTheNewGroup();
+    printf("\n");
     return 1;
 }
 
   int do_igsubscriber()
 {
 	int grpid=m_in.m7_i1;
-	int prid=(int)m_in.m7_i2;
+	int subscriber_id=(int)m_in.m7_i2;
+    if(subscriber_id == 0){
+        subscriber_id = ++total_subscriber_count;
+        printf("Your subscriber id is: %d",subscriber_id);
+    }
 	PROCESSES member =newgroups;
 
     
     printf("\n SYSTEM CALL INVOKED:: register as Subscriber \n\n");
-
-   
 	while(member!=NULL)
 	{
 		if(member->group_id==grpid)
@@ -998,9 +1018,17 @@ int do_iglookup()
 	}
 	if(member!=NULL)
 	{
-		if(member->no_of_subscribers<MAX_SUBSCRIBERS)
+		
+        for (int i = 0; i< member->no_of_subscribers; i++) {
+            if (member->participants[i].subscriber_pid == subscriber_id ) {
+                printf("\nYou are already registered in this group as a subscriber");
+                return 0;
+            }
+        }
+        
+        if(member->no_of_subscribers<MAX_SUBSCRIBERS)
 		{
-			member->participants[member->no_of_subscribers].subscriber_pid=prid;
+			member->participants[member->no_of_subscribers].subscriber_pid=subscriber_id;
 			member->participants[member->no_of_subscribers].sub_read_messages=member->group_message;
 			member->no_of_subscribers++;
 		}
@@ -1016,7 +1044,7 @@ int do_iglookup()
         printf("\n Group could not be found.");
 		return 0;
 	}
-    
+    printTheNewGroup();
     return 1;
 }
 
@@ -1027,7 +1055,7 @@ int do_iglookup()
 	int prid;
 	PROCESSES member =newgroups;
 	int i, found;
-    char message[LENGTH] = {0};
+    char *message;
     int val;
     MSG_BUF messgae_buffer =NULL;
     register struct mproc *rmp;    
@@ -1036,12 +1064,16 @@ int do_iglookup()
      printf("\n SYSTEM CALL INVOKED:: publish \n\n");
 
     rmp = &mproc[who_p];
-
+    printf("Message coming in is\n %s",m_in.m7_p1);
+    printf("\nIncoming group id is:%d",m_in.m7_i1);
+    printf("\nIncoming publisher id is:%d",m_in.m7_i2);
+    message = m_in.m7_p1;
+	printf("Message is here %s", message);
     
     if (!isCallBlocked(who_p))
     {
-          
-    	 //sys_datacopy(m_in.m_source,m_in.m7_p1, PM_PROC_NR,message,LENGTH);
+        printf("\nInside the right deadlock block");
+    	 sys_datacopy(m_in.m_source,m_in.m7_p1, PM_PROC_NR,message,LENGTH);
 		if(message==NULL)
 		{
             
@@ -1050,25 +1082,26 @@ int do_iglookup()
     }
     else
     {
-        
+        printf("\nDeadlocked");
         val = getOldStatus(&m_in,who_p,message);   
         if (val < 0)
         {
-             printf ("error \n");
+             printf ("error in getting old status \n");
             return 0;
         }                
         
         val = removePublisherFromBlockList(who_p);   
         if (val < 0)
         {
-            printf (" error \n");
+            printf (" error in removing the blocked publisher \n");
             return 0;
         }
     }
     
-    
+    printf("I am here Thank you \n");
     grpid=m_in.m7_i1;
     prid=(int)m_in.m7_i2;
+    
      
 	while(member!=NULL)
 	{
@@ -1082,6 +1115,7 @@ int do_iglookup()
 	{
 		/* Check if pid is already registered as a publisher. */
 		found=0;
+        printf("\nmember is:%d",member->no_of_publishers);
 		for (i = 0; i < member->no_of_publishers; i++)
 		{
 			if (member->leaders[i].publisher_pid == prid)
@@ -1096,7 +1130,7 @@ int do_iglookup()
 			return 0;
 		}
 		
-
+        printf("\nI found publisher!!\n");
 	 
 		if (member->no_of_messages == 0 || member->group_message == NULL)
 		{
@@ -1207,7 +1241,7 @@ int do_iglookup()
 		}
 		if (found == 0)
 		{
-            printf("\n Error ");
+            printf("\n Error. No subscriber found ");
 			return 0;
 		
 		}
@@ -1215,7 +1249,8 @@ int do_iglookup()
  
 
 		strcpy(message, member->participants[i].sub_read_messages->message);
-		//sys_datacopy(PM_PROC_NR,message,m_in.m_source,m_in.m7_p1,LENGTH);
+		sys_datacopy(PM_PROC_NR,message,m_in.m_source,m_in.m7_p1,LENGTH);
+		printf("Message in sys is %s", message);
 		 
 		member->participants[i].sub_read_messages->count++;
 	 
@@ -1233,9 +1268,11 @@ int do_iglookup()
 		{
 			member->group_message=member->group_message->next;
             member->no_of_messages--;
-			 
-			free(message);
-		}
+			printf("Read message: %s",message);
+		}else{
+			printf("Message is %s", message);
+            printf("No messages to be read from this group\n");
+        }
 	}
 	else
 	{
@@ -1259,7 +1296,7 @@ int do_igdelete()
    
     if(newgroups == NULL)
     {
-         printf("\n Group does not exist.");
+         printf("\n No groups registered so far!");
         return 0;
     }
 
@@ -1309,6 +1346,48 @@ int do_igdelete()
 			return 0;
 		}
 	}
+
+    printTheNewGroup();
+
+    return 1;
+}
+
+
+
+int do_iggetBackToOriginalMINIX()
+{
+	 
+	PROCESSES member=NULL;
+	MSG_BUF info=NULL;
+    BLOCKED_PROCESSES bl_processes = NULL;
+
+    printf("\n  getBackToOriginalMINIX \n\n");
+
+    
+	while(newgroups!=NULL)
+	{
+		member=newgroups;
+        while(member->group_message!=NULL)
+        {
+            info = member->group_message;
+            member->group_message=member->group_message->next;
+            free(info);
+        }
+		newgroups=newgroups->next;
+		free(member);
+	}
+    while(blockedProcesses!=NULL)
+    {
+        bl_processes = blockedProcesses;
+        blockedProcesses = blockedProcesses->next;
+        free(bl_processes);
+    }          
+        
+	no_of_groups=0;
+	group_id_allocate=0;
+	 
+
+    resetParams();
 
     
 
