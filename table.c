@@ -131,8 +131,8 @@ int (*call_vec[])(void) = {
 	do_igsubscriber,    /*117 =subscriber*/
 	do_igpublish,      /*118 = publish*/
 	do_igretrieve,    /*119=subscribe*/
-	do_igdelete,     /*120 = IGDELETE*/
-	do_iggetBackToOriginalMINIX /*121 = reset*/
+	do_igdelete    /*120 = IGDELETE*/
+	
 	 
 };
 /* This should not fail with "array size is negative": */
