@@ -10,6 +10,7 @@ int act_as_a_subscriber();
 int publish();
 int retreive();
 int delete_a_group();
+int reset();
 
 
 
@@ -44,8 +45,7 @@ case 4: act_as_a_publisher();break;
 case 5: publish();break;
 case 6: retreive();break;
 case 7: delete_a_group();break;
-case 8: reset();break;
-case 9: exit(0);
+case 8: exit(0);
 default:  break;
 
 }
@@ -56,9 +56,14 @@ default:  break;
 
 int create_a_group(){
 int group_id;
-
+char name[50]={0};
 int newGroup;
-    newGroup = IG_Create(&group_id);
+
+printf("enter the name u want to associate to the group\n");
+scanf("%s", name);
+
+printf("name in entry file is %s", name);
+    newGroup = IG_Create(&group_id,name);
     if(newGroup == -1) {
            printf("Creation of a new interest group failed\n");
            return -1;
@@ -146,13 +151,29 @@ int publish(){
 int group_id,publisher_id;
 
 int newGroup;
-char message[200] ={0};
+//char message[200] ={0};
+//    char *message = "";
+    
     printf("\nEnter your publisher id");
     scanf("%d",&publisher_id);
     printf("\nEnter the group id you wish to publish to:");
     scanf("%d",&group_id);
+
+    char m;
+    char message[200];
+    strcpy(message,"");
+    
+    // READ till eof
+    while(getc(stdin) != '\n'){
+    }
+    
     printf("\nEnter the message you wish to publish");
-    scanf("%s",message);
+    while((m = getc(stdin)) != '\n'){
+        int len = strlen(message);
+        message[len] = m;
+        message[len+1] = '\0';
+    }
+    printf("\nMessage is :%s",message);
     newGroup = IG_Publish(group_id,publisher_id,message);
     if(newGroup == -1) {
            printf("Publishing message failed\n");
@@ -213,21 +234,5 @@ newGroup = IG_Delete(group_id);
 
 };
 
-int reset(){
 
-int newGroup;
-
-newGroup = IG_getBackToOriginalMINIX();
- if(newGroup == -1) {
-           printf("reset failed\n");
-           return -1;
-        }else{
-           printf("reset succeeded\n");
-		   return 1;
-        }
-
-
-
-}
-    
 
