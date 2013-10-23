@@ -30,32 +30,32 @@
 #include "param.h"
 #include "kernel/proc.h"
 #include <stdlib.h>
- 
+
 struct utsname uts_val = {
-  "Minix",		/* system name */
-  "noname",		/* node/network name */
-  OS_RELEASE,		/* O.S. release (e.g. 1.5) */
-  OS_VERSION,		/* O.S. version (e.g. 10) */
-  "xyzzy",		/* machine (cpu) type (filled in later) */
+    "Minix",		/* system name */
+    "noname",		/* node/network name */
+    OS_RELEASE,		/* O.S. release (e.g. 1.5) */
+    OS_VERSION,		/* O.S. version (e.g. 10) */
+    "xyzzy",		/* machine (cpu) type (filled in later) */
 #if defined(__i386__)
-  "i386",		/* architecture */
+    "i386",		/* architecture */
 #elif defined(__arm__)
-  "arm",		/* architecture */
+    "arm",		/* architecture */
 #else
 #error			/* oops, no 'uname -mk' */
 #endif
 };
 
 static char *uts_tbl[] = {
-  uts_val.arch,
-  NULL,			/* No kernel architecture */
-  uts_val.machine,
-  NULL,			/* No hostname */
-  uts_val.nodename,
-  uts_val.release,
-  uts_val.version,
-  uts_val.sysname,
-  NULL,			/* No bus */			/* No bus */
+    uts_val.arch,
+    NULL,			/* No kernel architecture */
+    uts_val.machine,
+    NULL,			/* No hostname */
+    uts_val.nodename,
+    uts_val.release,
+    uts_val.version,
+    uts_val.sysname,
+    NULL,			/* No bus */			/* No bus */
 };
 
 #if ENABLE_SYSCALL_STATS
@@ -67,62 +67,62 @@ unsigned long calls_stats[NCALLS];
  *===========================================================================*/
 int do_sysuname()
 {
-/* Set or get uname strings. */
-
-  int r;
-  size_t n;
-  char *string;
+    /* Set or get uname strings. */
+    
+    int r;
+    size_t n;
+    char *string;
 #if 0 /* for updates */
-  char tmp[sizeof(uts_val.nodename)];
-  static short sizes[] = {
-	0,	/* arch, (0 = read-only) */
-	0,	/* kernel */
-	0,	/* machine */
-	0,	/* sizeof(uts_val.hostname), */
-	sizeof(uts_val.nodename),
-	0,	/* release */
-	0,	/* version */
-	0,	/* sysname */
-  };
+    char tmp[sizeof(uts_val.nodename)];
+    static short sizes[] = {
+        0,	/* arch, (0 = read-only) */
+        0,	/* kernel */
+        0,	/* machine */
+        0,	/* sizeof(uts_val.hostname), */
+        sizeof(uts_val.nodename),
+        0,	/* release */
+        0,	/* version */
+        0,	/* sysname */
+    };
 #endif
-
-  if ((unsigned) m_in.sysuname_field >= _UTS_MAX) return(EINVAL);
-
-  string = uts_tbl[m_in.sysuname_field];
-  if (string == NULL)
-	return EINVAL;	/* Unsupported field */
-
-  switch (m_in.sysuname_req) {
-  case _UTS_GET:
-	/* Copy an uname string to the user. */
-	n = strlen(string) + 1;
-	if (n > m_in.sysuname_len) n = m_in.sysuname_len;
-	r = sys_vircopy(SELF, (phys_bytes) string, 
-		mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
-		(phys_bytes) n);
-	if (r < 0) return(r);
-	break;
-
+    
+    if ((unsigned) m_in.sysuname_field >= _UTS_MAX) return(EINVAL);
+    
+    string = uts_tbl[m_in.sysuname_field];
+    if (string == NULL)
+        return EINVAL;	/* Unsupported field */
+    
+    switch (m_in.sysuname_req) {
+        case _UTS_GET:
+            /* Copy an uname string to the user. */
+            n = strlen(string) + 1;
+            if (n > m_in.sysuname_len) n = m_in.sysuname_len;
+            r = sys_vircopy(SELF, (phys_bytes) string,
+                            mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+                            (phys_bytes) n);
+            if (r < 0) return(r);
+            break;
+            
 #if 0	/* no updates yet */
-  case _UTS_SET:
-	/* Set an uname string, needs root power. */
-	len = sizes[m_in.sysuname_field];
-	if (mp->mp_effuid != 0 || len == 0) return(EPERM);
-	n = len < m_in.sysuname_len ? len : m_in.sysuname_len;
-	if (n <= 0) return(EINVAL);
-	r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
-		SELF, (phys_bytes) tmp, (phys_bytes) n);
-	if (r < 0) return(r);
-	tmp[n-1] = 0;
-	strcpy(string, tmp);
-	break;
+        case _UTS_SET:
+            /* Set an uname string, needs root power. */
+            len = sizes[m_in.sysuname_field];
+            if (mp->mp_effuid != 0 || len == 0) return(EPERM);
+            n = len < m_in.sysuname_len ? len : m_in.sysuname_len;
+            if (n <= 0) return(EINVAL);
+            r = sys_vircopy(mp->mp_endpoint, (phys_bytes) m_in.sysuname_value,
+                            SELF, (phys_bytes) tmp, (phys_bytes) n);
+            if (r < 0) return(r);
+            tmp[n-1] = 0;
+            strcpy(string, tmp);
+            break;
 #endif
-
-  default:
-	return(EINVAL);
-  }
-  /* Return the number of bytes moved. */
-  return(n);
+            
+        default:
+            return(EINVAL);
+    }
+    /* Return the number of bytes moved. */
+    return(n);
 }
 
 
@@ -131,40 +131,40 @@ int do_sysuname()
  *===========================================================================*/
 int do_getsysinfo()
 {
-  vir_bytes src_addr, dst_addr;
-  size_t len;
-
-  /* This call leaks important information. In the future, requests from
-   * non-system processes should be denied.
-   */
-  if (mp->mp_effuid != 0)
-  {
-	printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
-		mp->mp_endpoint, mp->mp_name);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
-  switch(m_in.SI_WHAT) {
-  case SI_PROC_TAB:			/* copy entire process table */
-        src_addr = (vir_bytes) mproc;
-        len = sizeof(struct mproc) * NR_PROCS;
-        break;
+    vir_bytes src_addr, dst_addr;
+    size_t len;
+    
+    /* This call leaks important information. In the future, requests from
+     * non-system processes should be denied.
+     */
+    if (mp->mp_effuid != 0)
+    {
+        printf("PM: unauthorized call of do_getsysinfo by proc %d '%s'\n",
+               mp->mp_endpoint, mp->mp_name);
+        sys_sysctl_stacktrace(mp->mp_endpoint);
+        return EPERM;
+    }
+    
+    switch(m_in.SI_WHAT) {
+        case SI_PROC_TAB:			/* copy entire process table */
+            src_addr = (vir_bytes) mproc;
+            len = sizeof(struct mproc) * NR_PROCS;
+            break;
 #if ENABLE_SYSCALL_STATS
-  case SI_CALL_STATS:
-  	src_addr = (vir_bytes) calls_stats;
-  	len = sizeof(calls_stats);
-  	break; 
+        case SI_CALL_STATS:
+            src_addr = (vir_bytes) calls_stats;
+            len = sizeof(calls_stats);
+            break;
 #endif
-  default:
-  	return(EINVAL);
-  }
-
-  if (len != m_in.SI_SIZE)
-	return(EINVAL);
-
-  dst_addr = (vir_bytes) m_in.SI_WHERE;
-  return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
+        default:
+            return(EINVAL);
+    }
+    
+    if (len != m_in.SI_SIZE)
+        return(EINVAL);
+    
+    dst_addr = (vir_bytes) m_in.SI_WHERE;
+    return sys_datacopy(SELF, src_addr, who_e, dst_addr, len);
 }
 
 /*===========================================================================*
@@ -172,64 +172,64 @@ int do_getsysinfo()
  *===========================================================================*/
 int do_getprocnr()
 {
-  register struct mproc *rmp;
-  static char search_key[PROC_NAME_LEN+1];
-  int key_len;
-  int s;
-
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0)
-  {
-	/* For now, allow non-root processes to request their own endpoint. */
-	if (m_in.pid < 0 && m_in.namelen == 0) {
-		mp->mp_reply.PM_ENDPT = who_e;
-		mp->mp_reply.PM_PENDPT = NONE;
-		return OK;
-	}
-
-	printf("PM: unauthorized call of do_getprocnr by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
+    register struct mproc *rmp;
+    static char search_key[PROC_NAME_LEN+1];
+    int key_len;
+    int s;
+    
+    /* This call should be moved to DS. */
+    if (mp->mp_effuid != 0)
+    {
+        /* For now, allow non-root processes to request their own endpoint. */
+        if (m_in.pid < 0 && m_in.namelen == 0) {
+            mp->mp_reply.PM_ENDPT = who_e;
+            mp->mp_reply.PM_PENDPT = NONE;
+            return OK;
+        }
+        
+        printf("PM: unauthorized call of do_getprocnr by proc %d\n",
+               mp->mp_endpoint);
+        sys_sysctl_stacktrace(mp->mp_endpoint);
+        return EPERM;
+    }
+    
 #if 0
-  printf("PM: do_getprocnr(%d) call from endpoint %d, %s\n",
-	m_in.pid, mp->mp_endpoint, mp->mp_name);
+    printf("PM: do_getprocnr(%d) call from endpoint %d, %s\n",
+           m_in.pid, mp->mp_endpoint, mp->mp_name);
 #endif
-
-  if (m_in.pid >= 0) {			/* lookup process by pid */
-	if ((rmp = find_proc(m_in.pid)) != NULL) {
-		mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
+    
+    if (m_in.pid >= 0) {			/* lookup process by pid */
+        if ((rmp = find_proc(m_in.pid)) != NULL) {
+            mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
 #if 0
-		printf("PM: pid result: %d\n", rmp->mp_endpoint);
+            printf("PM: pid result: %d\n", rmp->mp_endpoint);
 #endif
-		return(OK);
-	}
-  	return(ESRCH);			
-  } else if (m_in.namelen > 0) {	/* lookup process by name */
-  	key_len = MIN(m_in.namelen, PROC_NAME_LEN);
- 	if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.PMBRK_ADDR, 
- 			SELF, (vir_bytes) search_key, key_len))) 
- 		return(s);
- 	search_key[key_len] = '\0';	/* terminate for safety */
-  	for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-		if (((rmp->mp_flags & (IN_USE | EXITING)) == IN_USE) && 
-			strncmp(rmp->mp_name, search_key, key_len)==0) {
-  			mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
-  			return(OK);
-		} 
-	}
-  	return(ESRCH);			
-  } else {			/* return own/parent process number */
+            return(OK);
+        }
+        return(ESRCH);
+    } else if (m_in.namelen > 0) {	/* lookup process by name */
+        key_len = MIN(m_in.namelen, PROC_NAME_LEN);
+        if (OK != (s=sys_datacopy(who_e, (vir_bytes) m_in.PMBRK_ADDR,
+                                  SELF, (vir_bytes) search_key, key_len)))
+            return(s);
+        search_key[key_len] = '\0';	/* terminate for safety */
+        for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+            if (((rmp->mp_flags & (IN_USE | EXITING)) == IN_USE) &&
+                strncmp(rmp->mp_name, search_key, key_len)==0) {
+                mp->mp_reply.PM_ENDPT = rmp->mp_endpoint;
+                return(OK);
+            }
+        }
+        return(ESRCH);
+    } else {			/* return own/parent process number */
 #if 0
-	printf("PM: endpt result: %d\n", mp->mp_reply.PM_ENDPT);
+        printf("PM: endpt result: %d\n", mp->mp_reply.PM_ENDPT);
 #endif
-  	mp->mp_reply.PM_ENDPT = who_e;
-	mp->mp_reply.PM_PENDPT = mproc[mp->mp_parent].mp_endpoint;
-  }
-
-  return(OK);
+        mp->mp_reply.PM_ENDPT = who_e;
+        mp->mp_reply.PM_PENDPT = mproc[mp->mp_parent].mp_endpoint;
+    }
+    
+    return(OK);
 }
 
 /*===========================================================================*
@@ -237,21 +237,21 @@ int do_getprocnr()
  *===========================================================================*/
 int do_getepinfo()
 {
-  register struct mproc *rmp;
-  endpoint_t ep;
-
-  ep = m_in.PM_ENDPT;
-
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
-		mp->mp_reply.reply_res2 = rmp->mp_effuid;
-		mp->mp_reply.reply_res3 = rmp->mp_effgid;
-		return(rmp->mp_pid);
-	}
-  }
-
-  /* Process not found */
-  return(ESRCH);
+    register struct mproc *rmp;
+    endpoint_t ep;
+    
+    ep = m_in.PM_ENDPT;
+    
+    for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+        if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
+            mp->mp_reply.reply_res2 = rmp->mp_effuid;
+            mp->mp_reply.reply_res3 = rmp->mp_effgid;
+            return(rmp->mp_pid);
+        }
+    }
+    
+    /* Process not found */
+    return(ESRCH);
 }
 
 /*===========================================================================*
@@ -259,29 +259,29 @@ int do_getepinfo()
  *===========================================================================*/
 int do_getepinfo_o()
 {
-  register struct mproc *rmp;
-  endpoint_t ep;
-
-  /* This call should be moved to DS. */
-  if (mp->mp_effuid != 0) {
-	printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
-		mp->mp_endpoint);
-	sys_sysctl_stacktrace(mp->mp_endpoint);
-	return EPERM;
-  }
-
-  ep = m_in.PM_ENDPT;
-
-  for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
-	if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
-		mp->mp_reply.reply_res2 = (short) rmp->mp_effuid;
-		mp->mp_reply.reply_res3 = (char) rmp->mp_effgid;
-		return(rmp->mp_pid);
-	}
-  }
-
-  /* Process not found */
-  return(ESRCH);
+    register struct mproc *rmp;
+    endpoint_t ep;
+    
+    /* This call should be moved to DS. */
+    if (mp->mp_effuid != 0) {
+        printf("PM: unauthorized call of do_getepinfo_o by proc %d\n",
+               mp->mp_endpoint);
+        sys_sysctl_stacktrace(mp->mp_endpoint);
+        return EPERM;
+    }
+    
+    ep = m_in.PM_ENDPT;
+    
+    for (rmp = &mproc[0]; rmp < &mproc[NR_PROCS]; rmp++) {
+        if ((rmp->mp_flags & IN_USE) && (rmp->mp_endpoint == ep)) {
+            mp->mp_reply.reply_res2 = (short) rmp->mp_effuid;
+            mp->mp_reply.reply_res3 = (char) rmp->mp_effgid;
+            return(rmp->mp_pid);
+        }
+    }
+    
+    /* Process not found */
+    return(ESRCH);
 }
 
 /*===========================================================================*
@@ -289,29 +289,29 @@ int do_getepinfo_o()
  *===========================================================================*/
 int do_reboot()
 {
-  message m;
-
-  /* Check permission to abort the system. */
-  if (mp->mp_effuid != SUPER_USER) return(EPERM);
-
-  /* See how the system should be aborted. */
-  abort_flag = (unsigned) m_in.reboot_flag;
-  if (abort_flag >= RBT_INVALID) return(EINVAL); 
-
-  /* Order matters here. When VFS is told to reboot, it exits all its
-   * processes, and then would be confused if they're exited again by
-   * SIGKILL. So first kill, then reboot. 
-   */
-
-  check_sig(-1, SIGKILL, FALSE /* ksig*/); /* kill all users except init */
-  sys_stop(INIT_PROC_NR);		   /* stop init, but keep it around */
-
-  /* Tell VFS to reboot */
-  m.m_type = PM_REBOOT;
-
-  tell_vfs(&mproc[VFS_PROC_NR], &m);
-
-  return(SUSPEND);			/* don't reply to caller */
+    message m;
+    
+    /* Check permission to abort the system. */
+    if (mp->mp_effuid != SUPER_USER) return(EPERM);
+    
+    /* See how the system should be aborted. */
+    abort_flag = (unsigned) m_in.reboot_flag;
+    if (abort_flag >= RBT_INVALID) return(EINVAL);
+    
+    /* Order matters here. When VFS is told to reboot, it exits all its
+     * processes, and then would be confused if they're exited again by
+     * SIGKILL. So first kill, then reboot.
+     */
+    
+    check_sig(-1, SIGKILL, FALSE /* ksig*/); /* kill all users except init */
+    sys_stop(INIT_PROC_NR);		   /* stop init, but keep it around */
+    
+    /* Tell VFS to reboot */
+    m.m_type = PM_REBOOT;
+    
+    tell_vfs(&mproc[VFS_PROC_NR], &m);
+    
+    return(SUSPEND);			/* don't reply to caller */
 }
 
 /*===========================================================================*
@@ -321,32 +321,32 @@ int do_getsetpriority()
 {
 	int r, arg_which, arg_who, arg_pri;
 	struct mproc *rmp;
-
+    
 	arg_which = m_in.m1_i1;
 	arg_who = m_in.m1_i2;
 	arg_pri = m_in.m1_i3;	/* for SETPRIORITY */
-
+    
 	/* Code common to GETPRIORITY and SETPRIORITY. */
-
+    
 	/* Only support PRIO_PROCESS for now. */
 	if (arg_which != PRIO_PROCESS)
 		return(EINVAL);
-
+    
 	if (arg_who == 0)
 		rmp = mp;
 	else
 		if ((rmp = find_proc(arg_who)) == NULL)
 			return(ESRCH);
-
+    
 	if (mp->mp_effuid != SUPER_USER &&
-	   mp->mp_effuid != rmp->mp_effuid && mp->mp_effuid != rmp->mp_realuid)
+        mp->mp_effuid != rmp->mp_effuid && mp->mp_effuid != rmp->mp_realuid)
 		return EPERM;
-
+    
 	/* If GET, that's it. */
 	if (call_nr == GETPRIORITY) {
 		return(rmp->mp_nice - PRIO_MIN);
 	}
-
+    
 	/* Only root is allowed to reduce the nice level. */
 	if (rmp->mp_nice > arg_pri && mp->mp_effuid != SUPER_USER)
 		return(EACCES);
@@ -357,11 +357,11 @@ int do_getsetpriority()
 	 * We have to scale this between MIN_USER_Q and MAX_USER_Q to match
 	 * the kernel's scheduling queues.
 	 */
-
+    
 	if ((r = sched_nice(rmp, arg_pri)) != OK) {
 		return r;
 	}
-
+    
 	rmp->mp_nice = arg_pri;
 	return(OK);
 }
@@ -371,105 +371,105 @@ int do_getsetpriority()
  *===========================================================================*/
 int do_svrctl()
 {
-  int s, req;
-  vir_bytes ptr;
+    int s, req;
+    vir_bytes ptr;
 #define MAX_LOCAL_PARAMS 2
-  static struct {
-  	char name[30];
-  	char value[30];
-  } local_param_overrides[MAX_LOCAL_PARAMS];
-  static int local_params = 0;
-
-  req = m_in.svrctl_req;
-  ptr = (vir_bytes) m_in.svrctl_argp;
-
-  /* Is the request indeed for the PM? */
-  if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
-
-  /* Control operations local to the PM. */
-  switch(req) {
-  case PMSETPARAM:
-  case PMGETPARAM: {
-      struct sysgetenv sysgetenv;
-      char search_key[64];
-      char *val_start;
-      size_t val_len;
-      size_t copy_len;
-
-      /* Copy sysgetenv structure to PM. */
-      if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv, 
-              sizeof(sysgetenv)) != OK) return(EFAULT);  
-
-      /* Set a param override? */
-      if (req == PMSETPARAM) {
-  	if (local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
-  	if (sysgetenv.keylen <= 0
-  	 || sysgetenv.keylen >=
-  	 	 sizeof(local_param_overrides[local_params].name)
-  	 || sysgetenv.vallen <= 0
-  	 || sysgetenv.vallen >=
-  	 	 sizeof(local_param_overrides[local_params].value))
-  		return EINVAL;
-  		
-          if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
-            SELF, (vir_bytes) local_param_overrides[local_params].name,
-               sysgetenv.keylen)) != OK)
-               	return s;
-          if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.val,
-            SELF, (vir_bytes) local_param_overrides[local_params].value,
-              sysgetenv.vallen)) != OK)
-               	return s;
-            local_param_overrides[local_params].name[sysgetenv.keylen] = '\0';
-            local_param_overrides[local_params].value[sysgetenv.vallen] = '\0';
-
-  	local_params++;
-
-  	return OK;
-      }
-
-      if (sysgetenv.keylen == 0) {	/* copy all parameters */
-          val_start = monitor_params;
-          val_len = sizeof(monitor_params);
-      } 
-      else {				/* lookup value for key */
-      	  int p;
-          /* Try to get a copy of the requested key. */
-          if (sysgetenv.keylen > sizeof(search_key)) return(EINVAL);
-          if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
-                  SELF, (vir_bytes) search_key, sysgetenv.keylen)) != OK)
-              return(s);
-
-          /* Make sure key is null-terminated and lookup value.
-           * First check local overrides.
-           */
-          search_key[sysgetenv.keylen-1]= '\0';
-          for(p = 0; p < local_params; p++) {
-          	if (!strcmp(search_key, local_param_overrides[p].name)) {
-          		val_start = local_param_overrides[p].value;
-          		break;
-          	}
-          }
-          if (p >= local_params && (val_start = find_param(search_key)) == NULL)
-               return(ESRCH);
-          val_len = strlen(val_start) + 1;
-      }
-
-      /* See if it fits in the client's buffer. */
-      if (val_len > sysgetenv.vallen)
-      	return E2BIG;
-
-      /* Value found, make the actual copy (as far as possible). */
-      copy_len = MIN(val_len, sysgetenv.vallen); 
-      if ((s=sys_datacopy(SELF, (vir_bytes) val_start, 
-              who_e, (vir_bytes) sysgetenv.val, copy_len)) != OK)
-          return(s);
-
-      return OK;
-  }
-
-  default:
-	return(EINVAL);
-  }
+    static struct {
+        char name[30];
+        char value[30];
+    } local_param_overrides[MAX_LOCAL_PARAMS];
+    static int local_params = 0;
+    
+    req = m_in.svrctl_req;
+    ptr = (vir_bytes) m_in.svrctl_argp;
+    
+    /* Is the request indeed for the PM? */
+    if (((req >> 8) & 0xFF) != 'M') return(EINVAL);
+    
+    /* Control operations local to the PM. */
+    switch(req) {
+        case PMSETPARAM:
+        case PMGETPARAM: {
+            struct sysgetenv sysgetenv;
+            char search_key[64];
+            char *val_start;
+            size_t val_len;
+            size_t copy_len;
+            
+            /* Copy sysgetenv structure to PM. */
+            if (sys_datacopy(who_e, ptr, SELF, (vir_bytes) &sysgetenv,
+                             sizeof(sysgetenv)) != OK) return(EFAULT);
+            
+            /* Set a param override? */
+            if (req == PMSETPARAM) {
+                if (local_params >= MAX_LOCAL_PARAMS) return ENOSPC;
+                if (sysgetenv.keylen <= 0
+                    || sysgetenv.keylen >=
+                    sizeof(local_param_overrides[local_params].name)
+                    || sysgetenv.vallen <= 0
+                    || sysgetenv.vallen >=
+                    sizeof(local_param_overrides[local_params].value))
+                    return EINVAL;
+                
+                if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
+                                      SELF, (vir_bytes) local_param_overrides[local_params].name,
+                                      sysgetenv.keylen)) != OK)
+                    return s;
+                if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.val,
+                                      SELF, (vir_bytes) local_param_overrides[local_params].value,
+                                      sysgetenv.vallen)) != OK)
+                    return s;
+                local_param_overrides[local_params].name[sysgetenv.keylen] = '\0';
+                local_param_overrides[local_params].value[sysgetenv.vallen] = '\0';
+                
+                local_params++;
+                
+                return OK;
+            }
+            
+            if (sysgetenv.keylen == 0) {	/* copy all parameters */
+                val_start = monitor_params;
+                val_len = sizeof(monitor_params);
+            }
+            else {				/* lookup value for key */
+                int p;
+                /* Try to get a copy of the requested key. */
+                if (sysgetenv.keylen > sizeof(search_key)) return(EINVAL);
+                if ((s = sys_datacopy(who_e, (vir_bytes) sysgetenv.key,
+                                      SELF, (vir_bytes) search_key, sysgetenv.keylen)) != OK)
+                    return(s);
+                
+                /* Make sure key is null-terminated and lookup value.
+                 * First check local overrides.
+                 */
+                search_key[sysgetenv.keylen-1]= '\0';
+                for(p = 0; p < local_params; p++) {
+                    if (!strcmp(search_key, local_param_overrides[p].name)) {
+                        val_start = local_param_overrides[p].value;
+                        break;
+                    }
+                }
+                if (p >= local_params && (val_start = find_param(search_key)) == NULL)
+                    return(ESRCH);
+                val_len = strlen(val_start) + 1;
+            }
+            
+            /* See if it fits in the client's buffer. */
+            if (val_len > sysgetenv.vallen)
+                return E2BIG;
+            
+            /* Value found, make the actual copy (as far as possible). */
+            copy_len = MIN(val_len, sysgetenv.vallen);
+            if ((s=sys_datacopy(SELF, (vir_bytes) val_start,
+                                who_e, (vir_bytes) sysgetenv.val, copy_len)) != OK)
+                return(s);
+            
+            return OK;
+        }
+            
+        default:
+            return(EINVAL);
+    }
 }
 
 /*===========================================================================*
@@ -485,11 +485,11 @@ char *brk_addr;
 #endif
 {
 	int r;
-/* PM wants to call brk() itself. */
+    /* PM wants to call brk() itself. */
 	if((r=vm_brk(PM_PROC_NR, brk_addr)) != OK) {
 #if 0
 		printf("PM: own brk(%p) failed: vm_brk() returned %d\n",
-			brk_addr, r);
+               brk_addr, r);
 #endif
 		return -1;
 	}
@@ -501,39 +501,39 @@ char *brk_addr;
  *				Project 2 				             *
  *===========================================================================*/
 
- 
- #define MAX_GROUPS 5
- #define LENGTH 100
- #define MAX_PUBLISHERS 3 
- #define MAX_SUBSCRIBERS 5
- #define QUEUE_FULL 5
- #define FALSE 0
- #define TRUE 1 
- 
- 
-  
- 
-struct messages_queue 
-{
 
- char message[100]; 
+#define MAX_GROUPS 5
+#define LENGTH 100
+#define MAX_PUBLISHERS 3
+#define MAX_SUBSCRIBERS 5
+#define QUEUE_FULL 5
+#define FALSE 0
+#define TRUE 1
+
+
+
+
+struct messages_queue
+{
+    
+    char message[100];
     int count;
     struct messages_queue * next;
-
+    
 };
 
 typedef struct messages_queue * MSG_BUF;
 
 struct subscribers
 {
-    int subscriber_pid;  
-    MSG_BUF sub_read_messages;  
+    int subscriber_pid;
+    MSG_BUF sub_read_messages;
 };
 
 
 struct publishers
 {
-    int publisher_pid;  
+    int publisher_pid;
 };
 
 struct processes_group
@@ -542,9 +542,10 @@ struct processes_group
     int no_of_subscribers;
     int no_of_publishers;
     int no_of_messages;
+	char *group_name;
     struct subscribers participants[5];
     struct publishers leaders[MAX_PUBLISHERS];
-    MSG_BUF group_message;  
+    MSG_BUF group_message;
     struct processes_group *next;
 };
 
@@ -559,14 +560,14 @@ static int total_subscriber_count = 0;
 static int total_publisher_count = 0;
 
 
- int checkIfPublisherIsUnblocked()
+int checkIfPublisherIsUnblocked()
 {
-   
+    
 	BLOCKED_PROCESSES member, temp;
     temp = NULL;
-
+    
 	member = blockedProcesses;
-
+    
 	while(member!=NULL)
     {
 		if(member->unblocked == TRUE)
@@ -574,11 +575,11 @@ static int total_publisher_count = 0;
             return TRUE;
 		}
         member = member->next;
-	} 
-    return FALSE;    
+	}
+    return FALSE;
 }
 
- 
+
 void resetParams()
 {
 	no_of_groups =0;
@@ -586,20 +587,20 @@ void resetParams()
 	blockedProcesses = NULL ;
     areAllParamsSet = TRUE;
     newgroups = NULL;
- 
+    
 }
 
 void printProcessesInBlockedState()
 {
-
+    
 	BLOCKED_PROCESSES member, temp;
     temp = NULL;
-    printf(" PRINT BLOCK LIST\n");    
+    printf(" PRINT BLOCK LIST\n");
     
-
+    
 	member = blockedProcesses;
     if (member == NULL)
-            printf("No one is blcked\n"); 
+        printf("No one is blcked\n");
     else
     {
         
@@ -609,24 +610,24 @@ void printProcessesInBlockedState()
             printf("group  id = %d \n",member->group_id);
             printf("publisher = %d \n",member->publisher);
             printf("message = %d \n",member->store);
-            printf("unblocked status = %d \n",member->unblocked);            
+            printf("unblocked status = %d \n",member->unblocked);
             printf("message = %s \n",member->msg);
             member = member->next;
     	}
     }
-  
-        
-} 
- 
+    
+    
+}
+
 
 void unblockPublisherFromBlockList(int publisher_grpid)
 {
-
+    
 	BLOCKED_PROCESSES member, temp;
     member = temp = NULL;
-
     
-
+    
+    
 	member = blockedProcesses;
 	while(member!=NULL)
     {
@@ -637,8 +638,8 @@ void unblockPublisherFromBlockList(int publisher_grpid)
 		}
         member = member->next;
 	}
-     
-    printProcessesInBlockedState();        
+    
+    printProcessesInBlockedState();
 }
 
 
@@ -646,31 +647,31 @@ void unblockPublisherFromBlockList(int publisher_grpid)
 
 int isCallBlocked(int publisher)
 {
-
+    
     BLOCKED_PROCESSES bl_list = blockedProcesses;
     
     while(bl_list != NULL)
     {
-      if( bl_list->publisher== publisher)
-      {
-         
-        return 1;
-      }
-     bl_list=bl_list->next;
+        if( bl_list->publisher== publisher)
+        {
+            
+            return 1;
+        }
+        bl_list=bl_list->next;
     }
-      
+    
     return 0;
     
 }
 void saveCurrentStatus(message store, int publisher,char *msg)
 {
-    BLOCKED_PROCESSES member = NULL;   
-
-   
+    BLOCKED_PROCESSES member = NULL;
+    
+    
     
     if(blockedProcesses== NULL)
     {
-
+        
     	blockedProcesses = (BLOCKED_PROCESSES)malloc(sizeof(struct blockedPublisher));
         blockedProcesses->publisher_pid = store.m7_i2;
         blockedProcesses->group_id = store.m7_i1;
@@ -678,11 +679,11 @@ void saveCurrentStatus(message store, int publisher,char *msg)
     	blockedProcesses->unblocked = FALSE;
         strcpy(blockedProcesses->msg,msg);
         
-    
-        memcpy(&blockedProcesses->store,&store,sizeof(message));
-
         
-    	blockedProcesses->next=NULL;        
+        memcpy(&blockedProcesses->store,&store,sizeof(message));
+        
+        
+    	blockedProcesses->next=NULL;
     }
     else
     {
@@ -692,52 +693,52 @@ void saveCurrentStatus(message store, int publisher,char *msg)
             member=member->next;
         }
         member->next = (BLOCKED_PROCESSES)malloc(sizeof(struct blockedPublisher));
-        member=member->next; /* point to next node */
+        member=member->next;  
         member->publisher_pid = store.m7_i2;
         member->group_id = store.m7_i1;
-        member->publisher = publisher;        
+        member->publisher = publisher;
         member->unblocked = FALSE;
-        strcpy(member->msg,msg);        
+        strcpy(member->msg,msg);
         memcpy(&member->store,&store,sizeof(message));
-        member->next=NULL; 
-     }
+        member->next=NULL;
+    }
     printProcessesInBlockedState();
-        
+    
 }
 
 int getOldStatus(message* store, int publisher,char * msg)
 {
-
+    
     BLOCKED_PROCESSES bl_list = blockedProcesses;
-
-        
+    
+    
     while(bl_list != NULL)
     {
-
-      if( bl_list->publisher == publisher)
-      {
-          memcpy(store,&bl_list->store,sizeof(message));
-          strcpy(msg,bl_list->msg);            
-          return 1;
-      }
-     bl_list=bl_list->next;
+        
+        if( bl_list->publisher == publisher)
+        {
+            memcpy(store,&bl_list->store,sizeof(message));
+            strcpy(msg,bl_list->msg);
+            return 1;
+        }
+        bl_list=bl_list->next;
     }
-
+    
     
     return 0;
-     
+    
 }
 
 int removePublisherFromBlockList(int publisher)
 {
-
+    
 	BLOCKED_PROCESSES bl_list, temp;
     bl_list = temp = NULL;
-
-     
+    
+    
     if(blockedProcesses == NULL)
     {
-        printf("Group does not exist.");        
+        printf("Group does not exist.");
         return 0;
     }
     
@@ -749,42 +750,42 @@ int removePublisherFromBlockList(int publisher)
 	}
 	else
 	{
-         
+        
 		bl_list = blockedProcesses;
 		while(bl_list->next!=NULL)
         {
             
 			if(bl_list->next->publisher == publisher)
 			{
-               temp = bl_list->next;
+                temp = bl_list->next;
 				break;
 			}
 			bl_list=bl_list->next;
 		}
-      
+        
 		if(temp!=NULL)
 		{
-             
+            
 			bl_list->next = temp->next;
 			free(temp);
 		}
 		else
 		{
-           printf("\n Group does not exist.");
+            printf("\n Group does not exist.");
 			return 0;
 		}
 	}
-   printProcessesInBlockedState();
-
+    printProcessesInBlockedState();
+    
     return 1;
 }
 
 
- 
- 
+
+
 void printTheNewGroup()
 {
-
+    
 	PROCESSES member, t;
     MSG_BUF message;
     int i;
@@ -792,11 +793,11 @@ void printTheNewGroup()
     
     printf(" PRINT  GROUP\n");
     
-
+    
 	member = newgroups;
     if (member == NULL)
     {
-            printf("No group"); 
+        printf("No group");
     }
     else
     {
@@ -804,6 +805,7 @@ void printTheNewGroup()
     	while(member!=NULL)
         {
             printf("grpid = %d \n",member->group_id);
+			printf("grpname is %s\n", member->group_name);
             printf("no_of_subscribers = %d \n",member->no_of_subscribers);
             printf("no_of_publishers = %d \n",member->no_of_publishers);
             printf("no_of_messages = %d \n",member->no_of_messages);
@@ -819,9 +821,9 @@ void printTheNewGroup()
             for (i =0 ;i < member->no_of_publishers ; i++)
             {
                 printf("publishers[%d] spid = %d \n",i,member->leaders[i]);
-            }            
+            }
             printf("grpid = %d \n",member->group_id);
-            printf("no_of_messages = %d \n",member->no_of_messages);          
+            printf("no_of_messages = %d \n",member->no_of_messages);
             message = member->group_message;
             printf(" Message Que \n");
             while(message!=NULL)
@@ -833,46 +835,51 @@ void printTheNewGroup()
             member = member->next;
     	}
     }
-
-       
+    
+    
 }
 
 
- 
 
- int do_igcreate()
+
+int do_igcreate()
 {
     PROCESSES entry = NULL;
    	int group_Id;
-
+	char *name;
+	name = m_in.m7_p1;
+    sys_datacopy(m_in.m_source,m_in.m7_p1, PM_PROC_NR,name,LENGTH);
+    
     printf("\n--------------------------------------------------------------------------\n");
     printf("\n SYSTEM CALL INVOKED:: IG_Create \n\n");
+
     
-   
-    if(!areAllParamsSet)
+     if(!areAllParamsSet)
     {
-         resetParams();
+        resetParams();
     }
 	
-
-    /* Adding the interest group */
+    
+    
     if(newgroups==NULL)
     {
     	
     	newgroups=(PROCESSES)malloc(sizeof(struct processes_group));
-            group_id_allocate++;
+        group_id_allocate++;
     	newgroups->group_id=group_id_allocate;
     	newgroups->next=NULL;
     	newgroups->no_of_messages=0;
     	newgroups->no_of_publishers=0;
     	newgroups->no_of_subscribers=0;
+		newgroups->group_name =name;
     	entry=newgroups;
     }
+	
     else
     {
     	if(no_of_groups<MAX_GROUPS)
     	{
-           
+            
     		no_of_groups++;
     		entry=newgroups;
     		while(entry->next!=NULL)
@@ -881,45 +888,46 @@ void printTheNewGroup()
     		}
     		entry->next=(PROCESSES)malloc(sizeof(struct processes_group));
     		entry=entry->next;
-                group_id_allocate++;
+            group_id_allocate++;
     		entry->group_id=group_id_allocate;
     		entry->next=NULL;
     		entry->no_of_messages=0;
         	entry->no_of_publishers=0;
+			entry->group_name=name;
         	entry->no_of_subscribers=0;
     	}
     	else
     	{
             printf("\n\t IG_Create FAILED : Maximum number of groups exceeded \n");
-
-             
+            
+            
     		return 0;
     	}
     }
-     
-    group_Id = entry->group_id;  
-    sys_datacopy(PM_PROC_NR,&group_Id,m_in.m_source ,m_in.m7_p1,sizeof(int));
+    
+    group_Id = entry->group_id;
 	printTheNewGroup();
-   
-    return group_Id;
-	 
+    
+    return 1;
+    
 	
-
+    
 }
 
 int do_iglookup()
 {
 	char p[LENGTH]={0};
-//	char str[10];
+    	 
 	PROCESSES member=newgroups;
 	int i=0;
     int grpIds[MAX_GROUPS+1];
-     printf("\n SYSTEM CALL INVOKED:: IG LookUp \n\n");
-
+	char name[20];
+    printf("\n SYSTEM CALL INVOKED:: IG LookUp \n\n");
+    
     
 	if(p==NULL){
-	 
-		 printf("\n Error: Input Array does not exist.");
+        
+        printf("\n Error: Input Array does not exist.");
         return 0;
 	}
     if(member == NULL){
@@ -928,39 +936,44 @@ int do_iglookup()
     }
     printf("\n The registered interest groups are as follows:");
 	while(member!=NULL)
-	{   
+	{
         grpIds[i++] =  member->group_id;
-        //Add a name for the group while registering and print it out here.
+		name[i]=member->group_name;
+         
         printf("\n Group :%d",member->group_id);
+		printf("\n Group name is %s", member->group_name);
         member = member->next;
 	}
     
-//    sys_datacopy(PM_PROC_NR,grpIds,m_in.m_source ,m_in.m7_p1,sizeof(grpIds));
-     printf("\n--------------------------------------------------------------------------\n");
+       //sys_datacopy(PM_PROC_NR,grpIds,m_in.m_source ,m_in.m7_p1,sizeof(grpIds));
+    printf("\n--------------------------------------------------------------------------\n");
     return 0;
 }
- 
-  int do_igpublisher()
+
+int do_igpublisher()
 {
 	int grpid=m_in.m7_i1;
 	int publisher_id=m_in.m7_i2;
     if (publisher_id == 0) {
         publisher_id =  ++total_publisher_count;
-         printf("Your publisher id is: %d",publisher_id);
+        printf("Your publisher id is: %d",publisher_id);
+    }else if(publisher_id>total_publisher_count){
+        printf("\nInvalid publisher id");
+        return 0;
     }
 	PROCESSES member =newgroups;
-
+    
     
 	
     printf("\n SYSTEM CALL INVOKED:: register as Publisher \n\n");
-
-   
+    
+    
 	while(member!=NULL)
 	{
-
+        
 		if(member->group_id==grpid)
 		{
-			 
+            
 			break;
 		}
 		member=member->next;
@@ -987,8 +1000,8 @@ int do_iglookup()
 	}
 	else
 	{
-		 
-         printf("\n Group %d could not be found.", grpid);
+        
+        printf("\n Group %d could not be found.", grpid);
 		return 0;
 	}
     printTheNewGroup();
@@ -996,16 +1009,19 @@ int do_iglookup()
     return 1;
 }
 
-  int do_igsubscriber()
+int do_igsubscriber()
 {
 	int grpid=m_in.m7_i1;
 	int subscriber_id=(int)m_in.m7_i2;
     if(subscriber_id == 0){
         subscriber_id = ++total_subscriber_count;
         printf("Your subscriber id is: %d",subscriber_id);
+    }else if(subscriber_id>total_subscriber_count){
+        printf("Invalid publisher Id");
+        return 0;
     }
 	PROCESSES member =newgroups;
-
+    
     
     printf("\n SYSTEM CALL INVOKED:: register as Subscriber \n\n");
 	while(member!=NULL)
@@ -1040,7 +1056,7 @@ int do_iglookup()
 	}
 	else
 	{
-         
+        
         printf("\n Group could not be found.");
 		return 0;
 	}
@@ -1049,7 +1065,7 @@ int do_iglookup()
 }
 
 
-  int do_igpublish()
+int do_igpublish()
 {
 	int grpid;
 	int prid;
@@ -1058,11 +1074,11 @@ int do_iglookup()
     char *message;
     int val;
     MSG_BUF messgae_buffer =NULL;
-    register struct mproc *rmp;    
-
-
-     printf("\n SYSTEM CALL INVOKED:: publish \n\n");
-
+    register struct mproc *rmp;
+    
+    
+    printf("\n SYSTEM CALL INVOKED:: publish \n\n");
+    
     rmp = &mproc[who_p];
     printf("Message coming in is\n %s",m_in.m7_p1);
     printf("\nIncoming group id is:%d",m_in.m7_i1);
@@ -1073,7 +1089,7 @@ int do_iglookup()
     if (!isCallBlocked(who_p))
     {
         printf("\nInside the right deadlock block");
-    	 sys_datacopy(m_in.m_source,m_in.m7_p1, PM_PROC_NR,message,LENGTH);
+        sys_datacopy(m_in.m_source,m_in.m7_p1, PM_PROC_NR,message,LENGTH);
 		if(message==NULL)
 		{
             
@@ -1083,14 +1099,14 @@ int do_iglookup()
     else
     {
         printf("\nDeadlocked");
-        val = getOldStatus(&m_in,who_p,message);   
+        val = getOldStatus(&m_in,who_p,message);
         if (val < 0)
         {
-             printf ("error in getting old status \n");
+            printf ("error in getting old status \n");
             return 0;
-        }                
+        }
         
-        val = removePublisherFromBlockList(who_p);   
+        val = removePublisherFromBlockList(who_p);
         if (val < 0)
         {
             printf (" error in removing the blocked publisher \n");
@@ -1102,7 +1118,7 @@ int do_iglookup()
     grpid=m_in.m7_i1;
     prid=(int)m_in.m7_i2;
     
-     
+    
 	while(member!=NULL)
 	{
 		if(member->group_id==grpid)
@@ -1126,34 +1142,34 @@ int do_iglookup()
 		}
 		if (found == 0)
 		{
-             printf("\n Error: Not a valid Publisher.");
+            printf("\n Error: Not a valid Publisher.");
 			return 0;
 		}
 		
         printf("\nI found publisher!!\n");
-	 
+        
 		if (member->no_of_messages == 0 || member->group_message == NULL)
 		{
 			member->group_message = (MSG_BUF) malloc(sizeof(struct messages_queue));
-			 
+            
 			strcpy(member->group_message->message, message);
-			 
+            
 			member->group_message->count = 0;
 			member->group_message->next = NULL;
 			member->no_of_messages++;
-
-			 
-			for (i = 0; i < member->no_of_subscribers; i++) 
+            
+            
+			for (i = 0; i < member->no_of_subscribers; i++)
 			{
 				member->participants[i].sub_read_messages = member->group_message;
 			}
-		} 
+		}
 		
         else if (member->no_of_messages < QUEUE_FULL)
         {
-               
+            
 			messgae_buffer = member->group_message;
-			while (messgae_buffer->next != NULL) 
+			while (messgae_buffer->next != NULL)
 			{
 				messgae_buffer = messgae_buffer->next;
 			}
@@ -1161,14 +1177,14 @@ int do_iglookup()
 			messgae_buffer = messgae_buffer->next;
 			
 			strcpy(messgae_buffer->message, message);
-			 printf("\n Message   : %s", messgae_buffer->message);
+            printf("\n Message   : %s", messgae_buffer->message);
 			messgae_buffer->count = 0;
-       messgae_buffer->next = NULL;
+            messgae_buffer->next = NULL;
             
 			member->no_of_messages++;
-
             
-		} 
+            
+		}
 		
         else if (member->no_of_messages >= QUEUE_FULL)
 		{
@@ -1177,40 +1193,40 @@ int do_iglookup()
 #if 0
             return 0;
 #endif
-
-            saveCurrentStatus(m_in,who_p,message);
-             
-
-            rmp->mp_flags |= SIGSUSPENDED;  
             
-               
+            saveCurrentStatus(m_in,who_p,message);
+            
+            
+            rmp->mp_flags |= SIGSUSPENDED;
+            
+            
             return 0;
             
 		}
 	}
 	else
 	{
-		 printf("\n group could not be found.");
+        printf("\n group could not be found.");
 		return 0;
 	}
     
-   printTheNewGroup();
+    printTheNewGroup();
     return 1;
 }
 
- int do_igretrieve()
+int do_igretrieve()
 {
-
+    
 	int grpid=m_in.m7_i1;
 	int prid=(int)m_in.m7_i2;
     char message[LENGTH]={0};
 	MSG_BUF info=NULL;
 	PROCESSES member =newgroups;
 	int i, found;
-
-     printf("\n SYSTEM CALL INVOKED:: subscribe \n\n");
-
-
+    
+    printf("\n SYSTEM CALL INVOKED:: subscribe \n\n");
+    
+    
     
 	while(member!=NULL)
 	{
@@ -1220,16 +1236,16 @@ int do_iglookup()
 		}
 		member=member->next;
 	}
-
+    
 	if(member!=NULL)
 	{
-
+        
 		if(member->group_message==NULL)
 		{
             
 			return 0;
 		}
-		 
+        
 		found=0;
 		for (i = 0; i < member->no_of_subscribers; i++)
 		{
@@ -1243,24 +1259,24 @@ int do_iglookup()
 		{
             printf("\n Error. No subscriber found ");
 			return 0;
-		
+            
 		}
 		
- 
-
+        
+        
 		strcpy(message, member->participants[i].sub_read_messages->message);
-		sys_datacopy(PM_PROC_NR,message,m_in.m_source,m_in.m7_p1,LENGTH);
+		//sys_datacopy(PM_PROC_NR,message,m_in.m_source,m_in.m7_p1,LENGTH);
 		printf("Message in sys is %s", message);
-		 
+        
 		member->participants[i].sub_read_messages->count++;
-	 
-	 
+        
+        
 		if (member->participants[i].sub_read_messages->count >= member->no_of_subscribers)
 		{
 			info = member->participants[i].sub_read_messages;
             unblockPublisherFromBlockList(member->group_id);
             
-                        
+            
 		}
 		
 		member->participants[i].sub_read_messages = member->participants[i].sub_read_messages->next;
@@ -1276,11 +1292,11 @@ int do_iglookup()
 	}
 	else
 	{
-       printf("\n Group could not be found."); 
+        printf("\n Group could not be found."); 
 		return 0;
 	}
-
-      
+    
+    
     return 1;
 }
 
@@ -1291,19 +1307,19 @@ int do_igdelete()
     PROCESSES temp =NULL;
 	int grpid=m_in.m7_i1;
 	MSG_BUF info;
-
-
-   
+    
+    
+    
     if(newgroups == NULL)
     {
-         printf("\n No groups registered so far!");
+        printf("\n No groups registered so far!");
         return 0;
     }
-
-
+    
+    
 	if(newgroups->group_id == grpid)
 	{
-         
+        
 		temp=newgroups;
 		newgroups = newgroups->next;
 		while(member->group_message!=NULL)
@@ -1316,7 +1332,7 @@ int do_igdelete()
 	}
 	else
 	{
-         
+        
 		member=newgroups;
 		while(member->next!=NULL){
 			if(member->next->group_id==grpid)
@@ -1329,67 +1345,27 @@ int do_igdelete()
 		if(temp!=NULL)
 		{
 			member->next=temp->next;
-			 
+            
 			while(member->group_message!=NULL)
 			{
 				info=member->group_message;
 				member->group_message=member->group_message->next;
 				free(info);
 			}
-			 
+            
 			free(temp);
 		}
 		else
 		{
             
-           printf("\n Group does not exist.");
+            printf("\n Group does not exist.");
 			return 0;
 		}
 	}
-
+    
     printTheNewGroup();
-
-    return 1;
+    
+     return 1;
 }
 
 
-
-int do_iggetBackToOriginalMINIX()
-{
-	 
-	PROCESSES member=NULL;
-	MSG_BUF info=NULL;
-    BLOCKED_PROCESSES bl_processes = NULL;
-
-    printf("\n  getBackToOriginalMINIX \n\n");
-
-    
-	while(newgroups!=NULL)
-	{
-		member=newgroups;
-        while(member->group_message!=NULL)
-        {
-            info = member->group_message;
-            member->group_message=member->group_message->next;
-            free(info);
-        }
-		newgroups=newgroups->next;
-		free(member);
-	}
-    while(blockedProcesses!=NULL)
-    {
-        bl_processes = blockedProcesses;
-        blockedProcesses = blockedProcesses->next;
-        free(bl_processes);
-    }          
-        
-	no_of_groups=0;
-	group_id_allocate=0;
-	 
-
-    resetParams();
-
-    
-
-    return 1;
-}
