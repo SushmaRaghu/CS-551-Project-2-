@@ -70,9 +70,10 @@ int main()
 
 	  if(checkIfPublisherIsUnblocked()) 
       {
-  
+		printf("Blocked\n");
 	  	unblockedsyscalls();
-	  } else {
+	  } 
+	  else {
 	  
 	  /* Wait for the next message and extract useful information from it. */
 	  if (sef_receive_status(ANY, &m_in, &ipc_status) != OK)
@@ -152,9 +153,10 @@ int main()
 	if (result != SUSPEND) setreply(who_p, result);
 	sendreply();
   }
+  }
   return(OK);
 }
-}
+
 
 
 void unblockedsyscalls()
