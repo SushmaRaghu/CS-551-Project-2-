@@ -13,11 +13,13 @@
      return(_syscall( PM_PROC_NR, IGLOOKUP, &m ));
  }
 
-  int IG_Create(int * groupId){
+  int IG_Create(int * groupId , char *name){
  
       message m;
+	  char *n=name ;
 
-      m.m7_p1 = groupId;
+      m.m7_p1 = n;
+	  
     
       return (_syscall( PM_PROC_NR, IGCREATE, &m ));
 }
@@ -65,9 +67,4 @@ message m;
 
 }
 
- int IG_getBackToOriginalMINIX(void)
-{
-	message m;
-   	return(_syscall( PM_PROC_NR, IGRESET, &m ));
-}
  
